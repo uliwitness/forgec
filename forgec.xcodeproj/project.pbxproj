@@ -116,8 +116,8 @@
 			isa = PBXGroup;
 			children = (
 				5535629E21C047C800FE681E /* forgelib.hpp */,
-				553562A021C047C800FE681E /* forgelibPriv.hpp */,
 				553562A221C047C800FE681E /* forgelib.cpp */,
+				553562A021C047C800FE681E /* forgelibPriv.hpp */,
 			);
 			path = forgelib;
 			sourceTree = "<group>";

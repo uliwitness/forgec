@@ -120,6 +120,8 @@ namespace forge {
 	//	Do not use! Use variant instead!
 	class variant_string : public variant_base {
 	public:
+		variant_string( const variant_string& inOriginal );
+
 		virtual int64_t		get_int64() const;
 		
 		virtual double		get_double() const;
@@ -143,6 +145,8 @@ namespace forge {
 	//	Do not use! Use variant instead!
 	class variant_map : public variant_base {
 	public:
+		variant_map( const variant_map& inOriginal );
+		
 		virtual int64_t		get_int64() const;
 		
 		virtual double		get_double() const;
@@ -169,6 +173,7 @@ namespace forge {
 	//	to actually allocate the appropriat subclass inside that.
 	class variant : public value {
 	public:
+		variant( const variant &inOriginal ) 				{ new (mValue) variant_base(); inOriginal.val().copy_to(*val()); }
 		variant() 											{ new (mValue) variant_base(); }
 		~variant()											{ val()->~variant_base();  }
 		

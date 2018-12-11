@@ -10,9 +10,25 @@
 #include <string>
 #include "forgelib.hpp"
 
+class Process {
+public:
+	static forge::variant 		parameters;
+	static forge::static_string	name;
+};
+
+forge::variant 		Process::parameters;
+forge::static_string	Process::name;
+
 int main(int argc, const char * argv[]) {
+	Process::name.set((argc > 0) ? argv[0] : "");
+	for (int x = 1; x < argc; ++x) {
+		Process::parameters.set_value_for_key(forge::static_string(argv[x]), std::to_string(x));
+	}
+	std::cout << Process::name.get_string() << std::endl;
+	std::cout << Process::parameters.get_string() << std::endl;
+
 	forge::variant		firstParam;
-	
+
 	firstParam.set(777LL);
 	try { std::cout << "Integer: " << firstParam.get_int64() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
 	try { std::cout << "         " << firstParam.get_double() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }

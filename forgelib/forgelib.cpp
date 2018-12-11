@@ -139,6 +139,11 @@ void	forge::variant_double::copy_to( value &dest ) const
 #pragma mark -
 
 
+forge::variant_string::variant_string( const variant_string& inOriginal )
+{
+	mValue.mString = new std::string(*inOriginal.mValue.mString);
+}
+
 forge::variant_string::variant_string( std::string inStr )
 {
 	mValue.mString = new std::string(inStr);
@@ -202,6 +207,12 @@ forge::variant_map::variant_map()
 	mValue.mMap = new std::map<std::string, variant>();
 }
 
+forge::variant_map::variant_map( const variant_map& inOriginal )
+{
+	mValue.mMap = new std::map<std::string, variant>();
+	mValue.mMap->insert(inOriginal.mValue.mMap->begin(), inOriginal.mValue.mMap->end());
+}
+
 forge::variant_map::variant_map( const value& inValue, const std::string& inKey )
 {
 	mValue.mMap = new std::map<std::string, variant>();
@@ -228,7 +239,21 @@ double		forge::variant_map::get_double() const
 
 std::string	forge::variant_map::get_string() const
 {
-	throw std::runtime_error("Expected string, found a list.");
+	std::string str;
+	bool		isFirst = true;
+	
+	for (auto currPair : *mValue.mMap) {
+		if (isFirst) {
+			isFirst = false;
+		} else {
+			str.append("\n");
+		}
+		str.append(currPair.first);
+		str.append(":");
+		str.append(currPair.second.get_string());
+	}
+	
+	return str;
 }
 
 void		forge::variant_map::set_value_for_key( const value& inValue, const std::string &inKey )

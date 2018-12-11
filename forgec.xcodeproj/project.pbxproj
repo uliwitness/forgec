@@ -8,10 +8,34 @@
 
 /* Begin PBXBuildFile section */
 		5535629221C0475700FE681E /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5535629121C0475700FE681E /* main.cpp */; };
+		5535629F21C047C800FE681E /* forgelib.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 5535629E21C047C800FE681E /* forgelib.hpp */; };
+		553562A121C047C800FE681E /* forgelibPriv.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 553562A021C047C800FE681E /* forgelibPriv.hpp */; };
+		553562A321C047C800FE681E /* forgelib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 553562A221C047C800FE681E /* forgelib.cpp */; };
+		553562AE21C06C3200FE681E /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 553562AD21C06C3200FE681E /* main.cpp */; };
+		553562B521C06C5600FE681E /* libforgelib.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5535629C21C047C800FE681E /* libforgelib.a */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		553562B221C06C4800FE681E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5535628621C0475700FE681E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5535629B21C047C800FE681E;
+			remoteInfo = forgelib;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		5535628C21C0475700FE681E /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		553562A921C06C3200FE681E /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = /usr/share/man/man1/;
@@ -25,6 +49,12 @@
 /* Begin PBXFileReference section */
 		5535628E21C0475700FE681E /* forgec */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = forgec; sourceTree = BUILT_PRODUCTS_DIR; };
 		5535629121C0475700FE681E /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		5535629C21C047C800FE681E /* libforgelib.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libforgelib.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		5535629E21C047C800FE681E /* forgelib.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = forgelib.hpp; sourceTree = "<group>"; };
+		553562A021C047C800FE681E /* forgelibPriv.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = forgelibPriv.hpp; sourceTree = "<group>"; };
+		553562A221C047C800FE681E /* forgelib.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = forgelib.cpp; sourceTree = "<group>"; };
+		553562AB21C06C3200FE681E /* testrunner */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = testrunner; sourceTree = BUILT_PRODUCTS_DIR; };
+		553562AD21C06C3200FE681E /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -35,6 +65,21 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		5535629A21C047C800FE681E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		553562A821C06C3200FE681E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				553562B521C06C5600FE681E /* libforgelib.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -42,7 +87,10 @@
 			isa = PBXGroup;
 			children = (
 				5535629021C0475700FE681E /* forgec */,
+				5535629D21C047C800FE681E /* forgelib */,
+				553562AC21C06C3200FE681E /* testrunner */,
 				5535628F21C0475700FE681E /* Products */,
+				553562B421C06C5600FE681E /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -50,6 +98,8 @@
 			isa = PBXGroup;
 			children = (
 				5535628E21C0475700FE681E /* forgec */,
+				5535629C21C047C800FE681E /* libforgelib.a */,
+				553562AB21C06C3200FE681E /* testrunner */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -62,7 +112,44 @@
 			path = forgec;
 			sourceTree = "<group>";
 		};
+		5535629D21C047C800FE681E /* forgelib */ = {
+			isa = PBXGroup;
+			children = (
+				5535629E21C047C800FE681E /* forgelib.hpp */,
+				553562A021C047C800FE681E /* forgelibPriv.hpp */,
+				553562A221C047C800FE681E /* forgelib.cpp */,
+			);
+			path = forgelib;
+			sourceTree = "<group>";
+		};
+		553562AC21C06C3200FE681E /* testrunner */ = {
+			isa = PBXGroup;
+			children = (
+				553562AD21C06C3200FE681E /* main.cpp */,
+			);
+			path = testrunner;
+			sourceTree = "<group>";
+		};
+		553562B421C06C5600FE681E /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		5535629821C047C800FE681E /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5535629F21C047C800FE681E /* forgelib.hpp in Headers */,
+				553562A121C047C800FE681E /* forgelibPriv.hpp in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
 		5535628D21C0475700FE681E /* forgec */ = {
@@ -82,6 +169,41 @@
 			productReference = 5535628E21C0475700FE681E /* forgec */;
 			productType = "com.apple.product-type.tool";
 		};
+		5535629B21C047C800FE681E /* forgelib */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 553562A421C047C800FE681E /* Build configuration list for PBXNativeTarget "forgelib" */;
+			buildPhases = (
+				5535629821C047C800FE681E /* Headers */,
+				5535629921C047C800FE681E /* Sources */,
+				5535629A21C047C800FE681E /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = forgelib;
+			productName = forgelib;
+			productReference = 5535629C21C047C800FE681E /* libforgelib.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		553562AA21C06C3200FE681E /* testrunner */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 553562AF21C06C3200FE681E /* Build configuration list for PBXNativeTarget "testrunner" */;
+			buildPhases = (
+				553562A721C06C3200FE681E /* Sources */,
+				553562A821C06C3200FE681E /* Frameworks */,
+				553562A921C06C3200FE681E /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				553562B321C06C4800FE681E /* PBXTargetDependency */,
+			);
+			name = testrunner;
+			productName = testrunner;
+			productReference = 553562AB21C06C3200FE681E /* testrunner */;
+			productType = "com.apple.product-type.tool";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -92,6 +214,12 @@
 				ORGANIZATIONNAME = "Uli Kusterer";
 				TargetAttributes = {
 					5535628D21C0475700FE681E = {
+						CreatedOnToolsVersion = 10.1;
+					};
+					5535629B21C047C800FE681E = {
+						CreatedOnToolsVersion = 10.1;
+					};
+					553562AA21C06C3200FE681E = {
 						CreatedOnToolsVersion = 10.1;
 					};
 				};
@@ -109,6 +237,8 @@
 			projectRoot = "";
 			targets = (
 				5535628D21C0475700FE681E /* forgec */,
+				5535629B21C047C800FE681E /* forgelib */,
+				553562AA21C06C3200FE681E /* testrunner */,
 			);
 		};
 /* End PBXProject section */
@@ -122,7 +252,31 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		5535629921C047C800FE681E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				553562A321C047C800FE681E /* forgelib.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		553562A721C06C3200FE681E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				553562AE21C06C3200FE681E /* main.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		553562B321C06C4800FE681E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5535629B21C047C800FE681E /* forgelib */;
+			targetProxy = 553562B221C06C4800FE681E /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		5535629321C0475700FE681E /* Debug */ = {
@@ -254,6 +408,50 @@
 			};
 			name = Release;
 		};
+		553562A521C047C800FE681E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = RCKXACKVZS;
+				EXECUTABLE_PREFIX = lib;
+				GCC_ENABLE_CPP_EXCEPTIONS = YES;
+				GCC_ENABLE_CPP_RTTI = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		553562A621C047C800FE681E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = RCKXACKVZS;
+				EXECUTABLE_PREFIX = lib;
+				GCC_ENABLE_CPP_EXCEPTIONS = YES;
+				GCC_ENABLE_CPP_RTTI = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+		553562B021C06C3200FE681E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = RCKXACKVZS;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		553562B121C06C3200FE681E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = RCKXACKVZS;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -271,6 +469,24 @@
 			buildConfigurations = (
 				5535629621C0475700FE681E /* Debug */,
 				5535629721C0475700FE681E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		553562A421C047C800FE681E /* Build configuration list for PBXNativeTarget "forgelib" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				553562A521C047C800FE681E /* Debug */,
+				553562A621C047C800FE681E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		553562AF21C06C3200FE681E /* Build configuration list for PBXNativeTarget "testrunner" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				553562B021C06C3200FE681E /* Debug */,
+				553562B121C06C3200FE681E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

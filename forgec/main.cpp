@@ -7,9 +7,14 @@
 //
 
 #include <iostream>
+#include <fstream>
 
 int main(int argc, const char * argv[]) {
-	// insert code here...
-	std::cout << "Hello, World!\n";
+	std::ifstream fileStream(argv[1]);
+	std::string str((std::istreambuf_iterator<char>(fileStream)),
+					std::istreambuf_iterator<char>());
+
+	std::cout << str << std::endl;
+	
 	return 0;
 }

@@ -1,0 +1,3 @@
+on startUp
+	put the name of the process into myVar
+end startUp

@@ -19,6 +19,12 @@ public:
 forge::variant 		Process::parameters;
 forge::static_string	Process::name;
 
+int on_main() {
+	std::cout << "Main!" << std::endl;
+	
+	return 0;
+}
+
 int main(int argc, const char * argv[]) {
 	Process::name.set((argc > 0) ? argv[0] : "");
 	for (int x = 1; x < argc; ++x) {
@@ -54,5 +60,5 @@ int main(int argc, const char * argv[]) {
 	firstParam.get_value_for_key(returnedString, "1");
 	std::cout << returnedString.get_string() << std::endl;
 	
-	return 0;
+	return on_main();
 }

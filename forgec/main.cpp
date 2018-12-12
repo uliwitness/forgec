@@ -9,6 +9,7 @@
 #include <iostream>
 #include <fstream>
 #include "tokenizer.hpp"
+#include "parser.hpp"
 
 
 using namespace forge;
@@ -24,6 +25,9 @@ int main(int argc, const char * argv[]) {
 	tokenizer	t;
 	t.add_tokens_from(fileStream, argv[1]);
 	t.print( std::cout );
+	
+	parser		p;
+	p.parse(t.mTokens);
 	
 	return 0;
 }

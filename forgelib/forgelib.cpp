@@ -250,7 +250,17 @@ std::string	forge::variant_map::get_string() const
 		}
 		str.append(currPair.first);
 		str.append(":");
-		str.append(currPair.second.get_string());
+		std::string valStr(currPair.second.get_string());
+		size_t searchOffs = 0;
+		while (searchOffs < valStr.length()) {
+			size_t pos = valStr.find_first_of("\n¬", searchOffs + 1);
+			if (pos == std::string::npos) {
+				break;
+			}
+			valStr.insert(pos, "¬");
+			searchOffs = pos + 2;
+		}
+		str.append(valStr);
 	}
 	
 	return str;

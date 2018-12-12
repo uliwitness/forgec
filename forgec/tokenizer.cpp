@@ -9,6 +9,14 @@
 #include "tokenizer.hpp"
 
 
+#define X(n) #n ,
+static const char* sTokenTypeStrings[] = {
+	TOKEN_TYPES
+	nullptr
+};
+#undef X
+
+
 void	forge::tokenizer::end_token( token_type nextType )
 {
 	if (mCurrToken.mType == carriage_return_token) {
@@ -150,11 +158,15 @@ void	forge::tokenizer::add_tokens_from( std::istream &inStream, std::string inFi
 					mCurrToken.mText.append(1, currCh);
 				} else {
 					if (is_operator(currCh)) {
-						
-					} else if (mCurrToken.mType != identifier_token) {
-						end_token(identifier_token);
+						end_token(operator_token);
+						mCurrToken.mText.append(1, currCh);
+						end_token(whitespace_token);
+					} else {
+						if (mCurrToken.mType != identifier_token) {
+							end_token(identifier_token);
+						}
+						mCurrToken.mText.append(1, currCh);
 					}
-					mCurrToken.mText.append(1, currCh);
 				}
 				break;
 		}
@@ -167,7 +179,7 @@ void	forge::tokenizer::add_tokens_from( std::istream &inStream, std::string inFi
 void	forge::tokenizer::print( std::ostream &dest )
 {
 	for (auto currToken : mTokens) {
-		dest << "[" << currToken.mType << ": " << currToken.mText << "] ";
+		dest << "[" << sTokenTypeStrings[currToken.mType] << ": " << currToken.mText << "] ";
 	}
 	dest << std::endl;
 }

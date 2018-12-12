@@ -14,16 +14,21 @@
 
 namespace forge {
 	
+#define TOKEN_TYPES			X(whitespace_token) \
+	X(identifier_token) \
+	X(number_token) \
+	X(integer_token) \
+	X(operator_token) \
+	X(string_token) \
+	X(carriage_return_token) \
+	X(newline_token)
+
+	
+#define X(n) n,
 	enum token_type {
-		whitespace_token,
-		identifier_token,
-		number_token,
-		integer_token,
-		operator_token,
-		string_token,
-		carriage_return_token, // temp token type when we hit a CR so we can detect CRLF as one break only.
-		newline_token,
+		TOKEN_TYPES
 	};
+#undef X
 	
 	class token {
 	public:

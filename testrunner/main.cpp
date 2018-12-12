@@ -55,10 +55,11 @@ int main(int argc, const char * argv[]) {
 	try { std::cout << "         " << firstParam.get_double() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
 	try { std::cout << "         " << firstParam.get_string() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
 
-	firstParam.set_value_for_key(forge::static_string("list item"), "1");
+	firstParam.set_value_for_key(forge::static_string("list\n\nitem"), "1");
 	forge::static_string	returnedString;
 	firstParam.get_value_for_key(returnedString, "1");
 	std::cout << returnedString.get_string() << std::endl;
-	
+	std::cout << firstParam.get_string() << std::endl;
+
 	return on_main();
 }

@@ -14,6 +14,8 @@
 		553562AE21C06C3200FE681E /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 553562AD21C06C3200FE681E /* main.cpp */; };
 		553562B521C06C5600FE681E /* libforgelib.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5535629C21C047C800FE681E /* libforgelib.a */; };
 		553562B821C0825C00FE681E /* test1.frc in CopyFiles */ = {isa = PBXBuildFile; fileRef = 553562B621C0819800FE681E /* test1.frc */; };
+		553562BB21C1816000FE681E /* parser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 553562B921C1815F00FE681E /* parser.cpp */; };
+		553562BE21C1817B00FE681E /* tokenizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 553562BC21C1817B00FE681E /* tokenizer.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -58,6 +60,10 @@
 		553562AB21C06C3200FE681E /* testrunner */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = testrunner; sourceTree = BUILT_PRODUCTS_DIR; };
 		553562AD21C06C3200FE681E /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		553562B621C0819800FE681E /* test1.frc */ = {isa = PBXFileReference; lastKnownFileType = text; path = test1.frc; sourceTree = "<group>"; };
+		553562B921C1815F00FE681E /* parser.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = parser.cpp; sourceTree = "<group>"; };
+		553562BA21C1816000FE681E /* parser.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = parser.hpp; sourceTree = "<group>"; };
+		553562BC21C1817B00FE681E /* tokenizer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = tokenizer.cpp; sourceTree = "<group>"; };
+		553562BD21C1817B00FE681E /* tokenizer.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = tokenizer.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -111,6 +117,10 @@
 			isa = PBXGroup;
 			children = (
 				5535629121C0475700FE681E /* main.cpp */,
+				553562BD21C1817B00FE681E /* tokenizer.hpp */,
+				553562BC21C1817B00FE681E /* tokenizer.cpp */,
+				553562BA21C1816000FE681E /* parser.hpp */,
+				553562B921C1815F00FE681E /* parser.cpp */,
 				553562B621C0819800FE681E /* test1.frc */,
 			);
 			path = forgec;
@@ -252,6 +262,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				553562BB21C1816000FE681E /* parser.cpp in Sources */,
+				553562BE21C1817B00FE681E /* tokenizer.cpp in Sources */,
 				5535629221C0475700FE681E /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

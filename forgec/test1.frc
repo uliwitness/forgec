@@ -1,3 +1,4 @@
 on startUp
 	put the name of the process into myVar
+	put "This could be really useful!"
 end startUp

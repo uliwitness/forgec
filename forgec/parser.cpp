@@ -54,9 +54,21 @@ void	forge::parser::parse_parameter_declaration( std::vector<parameter_declarati
 }
 
 
-void	forge::parser::parse_one_line()
+void	forge::parser::parse_one_line( handler_definition &outHandler )
 {
-	skip_rest_of_line(); // To do: Parse line here.
+	skip_empty_lines();
+	
+	if (const std::string *handlerName = expect_unquoted_string()) {
+		handler_call	newCall;
+		newCall.mName = *handlerName;
+		outHandler.mCommands.push_back(newCall);
+		
+		skip_rest_of_line();	// TODO: Actually parse parameter expressions.
+	} else {
+		throw_parse_error("Expected handler name");
+	}
+	
+	skip_empty_lines();
 }
 
 
@@ -73,7 +85,7 @@ void	forge::parser::parse_handler( identifier_type inType, handler_definition &o
 				mCurrToken = saveToken;
 			}
 			
-			parse_one_line();
+			parse_one_line(outHandler);
 		}
 	} else {
 		throw_parse_error("Expected handler name");

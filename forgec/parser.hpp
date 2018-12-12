@@ -26,9 +26,15 @@ namespace forge {
 		bool		mIsReference = false;
 	};
 	
+	class handler_call {
+	public:
+		std::string	mName;
+	};
+	
 	class handler_definition {
 	public:
 		std::vector<parameter_declaration>	mParameters;
+		std::vector<handler_call>			mCommands;
 	};
 	
 	class script {
@@ -46,7 +52,7 @@ namespace forge {
 		
 		void	parse_handler( identifier_type inType, handler_definition &outHandler );
 		void	parse_parameter_declaration( std::vector<parameter_declaration> &outParameters );
-		void	parse_one_line();
+		void	parse_one_line( handler_definition &outHandler );
 		
 		void	throw_parse_error( const char *msg );
 		

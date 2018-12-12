@@ -27,7 +27,8 @@ int main(int argc, const char * argv[]) {
 	t.print( std::cout );
 	
 	parser		p;
-	p.parse(t.mTokens);
+	script		s;
+	p.parse(t.mTokens, s);
 	
 	return 0;
 }

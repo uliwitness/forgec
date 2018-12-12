@@ -62,7 +62,8 @@ namespace forge {
 									X2(open_parenthesis_operator,"(") \
 									X2(close_parenthesis_operator,")") \
 									X2(ampersand_operator,"&") \
-									X2(apostrophe_operator,"'")
+									X2(apostrophe_operator,"'") \
+									X2(at_operator,"@")
 
 	
 #define X(n) identifier_ ## n,
@@ -77,7 +78,7 @@ namespace forge {
 	
 	class token {
 	public:
-		bool	is_identifier( enum identifier_type inIdentifier ) const { return mType == identifier_token && mIdentifierType == inIdentifier; }
+		bool	is_identifier( enum identifier_type inIdentifier ) const { return (mType == identifier_token || mType == operator_token) && (mIdentifierType == inIdentifier || inIdentifier == identifier_INVALID); }
 		
 		enum token_type			mType = whitespace_token;
 		enum identifier_type	mIdentifierType = identifier_INVALID;

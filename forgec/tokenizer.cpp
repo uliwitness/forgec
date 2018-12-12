@@ -181,8 +181,6 @@ void	forge::tokenizer::add_tokens_from( std::istream &inStream, std::string inFi
 					mCurrToken.mText.append(1, currCh);
 				} else {
 					if (is_operator(currCh)) {
-						if (currCh == '+')
-							printf("plus\n");
 						end_token(operator_token);
 						mCurrToken.mText.append(1, currCh);
 						++mCurrToken.mEndOffset;

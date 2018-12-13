@@ -1,4 +1,5 @@
 on startUp foo, @bar, baz
+	put 1, "hello", 123.45
 	-- put the name of the process into myVar
-	put "This could be really useful!" && 4+5* 7 -16 ^ 2.5 . 1.1.1
+	-- put "This could be really useful!" && 4+5* 7 -16 ^ 2.5 . 1.1.1
 end startUp

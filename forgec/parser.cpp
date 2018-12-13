@@ -54,6 +54,26 @@ void	forge::parser::parse_parameter_declaration( std::vector<parameter_declarati
 }
 
 
+forge::value	forge::parser::parse_one_value()
+{
+	if (const token *numToken = expect_token_type(integer_token)) {
+		value	theValue;
+		theValue.mValue = numToken->mText;
+		return theValue;
+	} else if (const token *numToken = expect_token_type(number_token)) {
+		value	theValue;
+		theValue.mValue = numToken->mText;
+		return theValue;
+	} else if (const token *numToken = expect_token_type(string_token)) {
+		value	theValue;
+		theValue.mValue = numToken->mText;
+		return theValue;
+	}
+	
+	throw_parse_error("Expected a value");
+}
+
+
 void	forge::parser::parse_one_line( handler_definition &outHandler )
 {
 	skip_empty_lines();
@@ -61,9 +81,20 @@ void	forge::parser::parse_one_line( handler_definition &outHandler )
 	if (const std::string *handlerName = expect_unquoted_string()) {
 		handler_call	newCall;
 		newCall.mName = *handlerName;
-		outHandler.mCommands.push_back(newCall);
 		
-		skip_rest_of_line();	// TODO: Actually parse parameter expressions.
+		while (!expect_token_type(newline_token, peek)) {
+			newCall.mParameters.push_back(parse_one_value());
+			
+			if (!expect_identifier(identifier_comma_operator)) {
+				break;
+			}
+		}
+		
+		if (expect_token_type(newline_token) == nullptr) {
+			throw_parse_error("Expected end of line");
+		}
+		
+		outHandler.mCommands.push_back(newCall);
 	} else {
 		throw_parse_error("Expected handler name");
 	}
@@ -75,6 +106,7 @@ void	forge::parser::parse_one_line( handler_definition &outHandler )
 void	forge::parser::parse_handler( identifier_type inType, handler_definition &outHandler )
 {
 	if (const std::string *handlerName = expect_unquoted_string()) {
+		outHandler.mName = *handlerName;
 		parse_parameter_declaration(outHandler.mParameters);
 
 		while (mCurrToken != mTokens->end()) {
@@ -110,14 +142,17 @@ void	forge::parser::skip_empty_lines()
 }
 
 
-bool	forge::parser::expect_token_type( token_type inType )
+const forge::token*	forge::parser::expect_token_type( token_type inType, skip_type inSkip )
 {
 	if (mCurrToken != mTokens->end() && mCurrToken->mType == inType) {
-		++mCurrToken;
-		return true;
+		const token* theToken = &(*mCurrToken);
+		if (inSkip == skip_type::skip) {
+			++mCurrToken;
+		}
+		return theToken;
 	}
 	
-	return false;
+	return nullptr;
 }
 
 

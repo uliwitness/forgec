@@ -30,6 +30,8 @@ int main(int argc, const char * argv[]) {
 		parser		p;
 		script		s;
 		p.parse(t.mTokens, s);
+		
+		s.print( std::cout );
 	} catch( std::exception& err ) {
 		std::cerr << "error: " << err.what() << std::endl;
 	} catch( ... ) {

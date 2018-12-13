@@ -21,7 +21,9 @@ namespace forge {
 	X(operator_token) \
 	X(string_token) \
 	X(carriage_return_token) \
-	X(newline_token)
+	X(newline_token) \
+	X(possible_comment_token) \
+	X(comment_token)
 
 	
 #define X(n) n,

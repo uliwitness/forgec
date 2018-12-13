@@ -32,6 +32,8 @@ void	forge::tokenizer::end_token( token_type nextType )
 {
 	if (mCurrToken.mType == carriage_return_token) {
 		mCurrToken.mType = newline_token;
+	} else if (mCurrToken.mType == possible_comment_token) {
+		mCurrToken.mType = operator_token;
 	}
 	
 	if (mCurrToken.mType == string_token) {
@@ -110,6 +112,8 @@ void	forge::tokenizer::add_tokens_from( std::istream &inStream, std::string inFi
 					mCurrToken.mStartOffset = mCurrToken.mEndOffset;
 				} else if (mCurrToken.mType == string_token) {
 					mCurrToken.mText.append(1, currCh);
+				} else if (mCurrToken.mType == comment_token) {
+					mCurrToken.mStartOffset = mCurrToken.mEndOffset;
 				} else {
 					end_token(whitespace_token);
 				}
@@ -118,6 +122,11 @@ void	forge::tokenizer::add_tokens_from( std::istream &inStream, std::string inFi
 			case '\r':
 				if (mCurrToken.mType == string_token) {
 					mCurrToken.mText.append(1, currCh);
+				} else if (mCurrToken.mType == comment_token) {
+					mCurrToken.mType = carriage_return_token;
+					mCurrToken.mText.assign(1, currCh);
+					mCurrToken.mStartOffset = mCurrToken.mEndOffset;
+					mCurrToken.mIdentifierType = identifier_INVALID;
 				} else {
 					end_token(carriage_return_token);
 					mCurrToken.mText.append(1, currCh);
@@ -127,6 +136,11 @@ void	forge::tokenizer::add_tokens_from( std::istream &inStream, std::string inFi
 			case '\n':
 				if (mCurrToken.mType == string_token) {
 					mCurrToken.mText.append(1, currCh);
+				} else if (mCurrToken.mType == comment_token) {
+					mCurrToken.mType = newline_token;
+					mCurrToken.mText.assign(1, currCh);
+					mCurrToken.mStartOffset = mCurrToken.mEndOffset;
+					mCurrToken.mIdentifierType = identifier_INVALID;
 				} else {
 					if (mCurrToken.mType != carriage_return_token) {
 						end_token(newline_token);
@@ -141,13 +155,15 @@ void	forge::tokenizer::add_tokens_from( std::istream &inStream, std::string inFi
 			case '\"':
 				if (mCurrToken.mType == string_token) {
 					end_token(whitespace_token);
-				} else if (mCurrToken.mType == whitespace_token) {
+				} else if (mCurrToken.mType == comment_token) {
+					mCurrToken.mStartOffset = mCurrToken.mEndOffset;
+				} else if (mCurrToken.mType != string_token) {
 					end_token(string_token);
 				}
 				break;
 				
 			case '0'...'9':
-				if (mCurrToken.mType == whitespace_token) {
+				if (mCurrToken.mType == whitespace_token || mCurrToken.mType == possible_comment_token) {
 					end_token(integer_token);
 					mCurrToken.mText.append(1, currCh);
 				} else if (mCurrToken.mType == integer_token) {
@@ -158,6 +174,8 @@ void	forge::tokenizer::add_tokens_from( std::istream &inStream, std::string inFi
 					mCurrToken.mText.append(1, currCh);
 				} else if (mCurrToken.mType == string_token) {
 					mCurrToken.mText.append(1, currCh);
+				} else if (mCurrToken.mType == comment_token) {
+					mCurrToken.mStartOffset = mCurrToken.mEndOffset;
 				}
 				break;
 			
@@ -167,6 +185,8 @@ void	forge::tokenizer::add_tokens_from( std::istream &inStream, std::string inFi
 				} else if (mCurrToken.mType == integer_token) {
 					mCurrToken.mType = number_token;
 					mCurrToken.mText.append(1, currCh);
+				} else if (mCurrToken.mType == comment_token) {
+					mCurrToken.mStartOffset = mCurrToken.mEndOffset;
 				} else {
 					end_token(operator_token);
 					mCurrToken.mText.append(1, currCh);
@@ -176,9 +196,22 @@ void	forge::tokenizer::add_tokens_from( std::istream &inStream, std::string inFi
 				}
 				break;
 				
+			case '-':
+				if (mCurrToken.mType == possible_comment_token) {
+					mCurrToken.mType = comment_token;
+				} else if (mCurrToken.mType == comment_token) {
+					mCurrToken.mStartOffset = mCurrToken.mEndOffset;
+				} else {
+					end_token(possible_comment_token);
+					mCurrToken.mText.append(1, '-');
+				}
+				break;
+				
 			default:
 				if (mCurrToken.mType == string_token) {
 					mCurrToken.mText.append(1, currCh);
+				} else if (mCurrToken.mType == comment_token) {
+					mCurrToken.mStartOffset = mCurrToken.mEndOffset;
 				} else {
 					if (is_operator(currCh)) {
 						end_token(operator_token);

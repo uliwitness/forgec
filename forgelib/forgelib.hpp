@@ -44,6 +44,12 @@ namespace forge {
 	};
 	
 	
+	class stack_suitable_value : public value {
+	public:
+		virtual ~stack_suitable_value() {}
+	};
+	
+	
 	// Internal base class used by 'variant' to store all values:
 	//	Do not use! Use variant instead!
 	class variant_base : public value {
@@ -92,7 +98,7 @@ namespace forge {
 		
 		friend class variant_base;
 	};
-
+	static_assert(sizeof(variant_int64) == sizeof(variant_base), "subclasses of variant_base must be the same size.");
 
 	// Internal base class used by 'variant' to store floating point values:
 	//	Do not use! Use variant instead!
@@ -114,6 +120,7 @@ namespace forge {
 
 		friend class variant_base;
 	};
+	static_assert(sizeof(variant_double) == sizeof(variant_base), "subclasses of variant_base must be the same size.");
 
 
 	// Internal base class used by 'variant' to store string values:
@@ -139,6 +146,7 @@ namespace forge {
 
 		friend class variant_base;
 	};
+	static_assert(sizeof(variant_string) == sizeof(variant_base), "subclasses of variant_base must be the same size.");
 
 	
 	// Internal base class used by 'variant' to store dictionary values:
@@ -163,15 +171,18 @@ namespace forge {
 		variant_map( const value& inValue, const std::string& inKey );
 		~variant_map();
 		
+		int mFoo = 77;
+		
 		friend class variant_base;
 	};
+	static_assert(sizeof(variant_int64) == sizeof(variant_base), "subclasses of variant_base must be the same size.");
 
 	
 	// Class used for variables. A variable may change its type depending on
 	//	what value you assign to it. To achieve this, we employ a mean hack:
 	//	we store the actual values in an untyped buffer, and use placement new
 	//	to actually allocate the appropriat subclass inside that.
-	class variant : public value {
+	class variant : public stack_suitable_value {
 	public:
 		variant( const variant &inOriginal ) 				{ new (mValue) variant_base(); inOriginal.val().copy_to(*val()); }
 		variant() 											{ new (mValue) variant_base(); }
@@ -201,10 +212,11 @@ namespace forge {
 	
 	// Class used for storing a string in a way that lets one access its contents
 	//	as any other type as long as the string can be converted to that:
-	class static_string : public value {
+	class static_string : public stack_suitable_value {
 	public:
 		static_string( std::string inStr = std::string() );
-		
+		virtual ~static_string() {}
+
 		virtual void		set( int64_t inNum );
 		virtual int64_t		get_int64() const;
 		
@@ -225,10 +237,11 @@ namespace forge {
 
 	// Class used for storing an integer in a way that lets one access its contents
 	//	as any other type as long as the string can be converted to that:
-	class static_int64 : public value {
+	class static_int64 : public stack_suitable_value {
 	public:
 		static_int64( int64_t inNum = 0LL );
-		
+		virtual ~static_int64() {}
+
 		virtual void		set( int64_t inNum );
 		virtual int64_t		get_int64() const;
 		
@@ -250,10 +263,11 @@ namespace forge {
 	// Class used for storing an floating point number in a way that lets one
 	//	access its contents as any other type as long as the string can be
 	//	converted to that:
-	class static_double : public value {
+	class static_double : public stack_suitable_value {
 	public:
 		static_double( double inDouble = 0.0 );
-		
+		virtual ~static_double() {}
+
 		virtual void		set( int64_t inNum );
 		virtual int64_t		get_int64() const;
 		
@@ -269,7 +283,7 @@ namespace forge {
 		virtual void		copy_to( value &dest ) const;
 
 	protected:
-		int64_t mDouble;
+		double mDouble;
 	};
 }
 

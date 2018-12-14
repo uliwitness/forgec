@@ -413,3 +413,63 @@ void	forge::static_int64::copy_to( value &dest ) const
 {
 	dest.set(mInteger);
 }
+
+
+forge::static_double::static_double( double inNum )
+{
+	mDouble = inNum;
+}
+
+void		forge::static_double::set( int64_t inNum )
+{
+	mDouble = inNum;
+}
+
+int64_t		forge::static_double::get_int64() const
+{
+	if (truncf(mDouble) != mDouble) {
+		throw std::runtime_error("Expected integer, found a fractional number.");
+	}
+	return mDouble;
+}
+
+void		forge::static_double::set( double inNum )
+{
+	mDouble = inNum;
+}
+
+double		forge::static_double::get_double() const
+{
+	return mDouble;
+}
+
+void		forge::static_double::set( std::string inString )
+{
+	const char * str = inString.c_str();
+	char * endPtr = nullptr;
+	double num = strtod(str, &endPtr);
+	if (endPtr != (str + inString.length())) {
+		throw std::runtime_error("Expected string, found a number.");
+	}
+	mDouble = num;
+}
+
+std::string	forge::static_double::get_string() const
+{
+	return std::to_string(mDouble);
+}
+
+void		forge::static_double::set_value_for_key( const value& inValue, const std::string &inKey )
+{
+	throw std::runtime_error("Expected number, found a list.");
+}
+
+void		forge::static_double::get_value_for_key( value& outValue, const std::string &inKey ) const
+{
+	outValue.set("");
+}
+
+void	forge::static_double::copy_to( value &dest ) const
+{
+	dest.set(mDouble);
+}

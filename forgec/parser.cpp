@@ -54,20 +54,60 @@ void	forge::parser::parse_parameter_declaration( std::vector<parameter_declarati
 }
 
 
-forge::value	forge::parser::parse_one_value()
+forge::stack_suitable_value	*forge::parser::parse_expression()
+{
+	stack_suitable_value	*theOperand = parse_one_value();
+	const token *operatorToken = nullptr;
+	while (!expect_identifier(identifier_comma_operator, peek)
+		   && !expect_identifier(identifier_close_parenthesis_operator, peek)
+		   && (operatorToken = expect_token_type(operator_token))) {
+		stack_suitable_value	*firstOperand = theOperand;
+		stack_suitable_value	*secondOperand = parse_one_value();
+		handler_call *operation = mScript->take_ownership_of(new handler_call);
+		operation->mName = operatorToken->mText;
+		operation->mParameters.push_back( firstOperand );
+		operation->mParameters.push_back( secondOperand );
+		theOperand = operation;
+	}
+	return theOperand;
+}
+
+forge::stack_suitable_value	*forge::parser::parse_one_value()
 {
 	if (const token *numToken = expect_token_type(integer_token)) {
-		value	theValue;
-		theValue.mValue = numToken->mText;
+		static_int64	*theValue = mScript->take_ownership_of(new static_int64);
+		theValue->set(numToken->mText);
 		return theValue;
 	} else if (const token *numToken = expect_token_type(number_token)) {
-		value	theValue;
-		theValue.mValue = numToken->mText;
+		static_double	*theValue = mScript->take_ownership_of(new static_double);
+		theValue->set(numToken->mText);
 		return theValue;
 	} else if (const token *numToken = expect_token_type(string_token)) {
-		value	theValue;
-		theValue.mValue = numToken->mText;
+		static_string	*theValue = mScript->take_ownership_of(new static_string);
+		theValue->set(numToken->mText);
 		return theValue;
+	} else if (const std::string *handlername = expect_unquoted_string()) {
+		if (expect_identifier(identifier_open_parenthesis_operator)) {
+			handler_call	*newCall = mScript->take_ownership_of(new handler_call);
+			newCall->mName = *handlername;
+
+			while (!expect_identifier(identifier_close_parenthesis_operator, peek)) {
+				newCall->mParameters.push_back(parse_expression());
+				
+				if (!expect_identifier(identifier_comma_operator)) {
+					break;
+				}
+			}
+			
+			if (!expect_identifier(identifier_close_parenthesis_operator)) {
+				throw_parse_error("Expected closing bracket ");
+			}
+			return newCall;
+		} else {
+			static_string	*theValue = mScript->take_ownership_of(new static_string);
+			theValue->set(*handlername);
+			return theValue;
+		}
 	}
 	
 	throw_parse_error("Expected a value");
@@ -79,11 +119,11 @@ void	forge::parser::parse_one_line( handler_definition &outHandler )
 	skip_empty_lines();
 	
 	if (const std::string *handlerName = expect_unquoted_string()) {
-		handler_call	newCall;
-		newCall.mName = *handlerName;
+		handler_call	*newCall = mScript->take_ownership_of(new handler_call);
+		newCall->mName = *handlerName;
 		
 		while (!expect_token_type(newline_token, peek)) {
-			newCall.mParameters.push_back(parse_one_value());
+			newCall->mParameters.push_back(parse_expression());
 			
 			if (!expect_identifier(identifier_comma_operator)) {
 				break;
@@ -198,6 +238,7 @@ void	forge::parser::parse( std::vector<token>& inTokens, script &outScript )
 {
 	mTokens = &inTokens;
 	mCurrToken = inTokens.begin();
+	mScript = &outScript;
 	
 	while (mCurrToken != mTokens->end()) {
 		skip_empty_lines();
@@ -208,4 +249,69 @@ void	forge::parser::parse( std::vector<token>& inTokens, script &outScript )
 			outScript.mHandlers.push_back(theHandler);
 		}
 	}
+}
+
+
+void	forge::handler_call::set( int64_t inNum )
+{
+	
+}
+
+
+int64_t	forge::handler_call::get_int64() const
+{
+	return 0;
+}
+
+
+
+void	forge::handler_call::set( double inNum )
+{
+	
+}
+
+
+double	forge::handler_call::get_double() const
+{
+	return 0.0;
+}
+
+
+
+void	forge::handler_call::set( std::string inString )
+{
+	
+}
+
+
+std::string	forge::handler_call::get_string() const
+{
+	std::string msg(mName);
+	msg.append("(");
+	
+	for(auto p : mParameters) {
+		msg.append(" ");
+		msg.append(p->get_string());
+	}
+	
+	msg.append(" )");
+	return msg;
+}
+
+
+void	forge::handler_call::set_value_for_key( const value& inValue, const std::string &inKey )
+{
+	
+}
+
+
+void	forge::handler_call::get_value_for_key( value& outValue, const std::string &inKey ) const
+{
+	outValue.set(std::string());
+}
+
+
+void	forge::handler_call::copy_to( value &dest ) const
+{
+	dest.set(std::string());
 }

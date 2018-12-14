@@ -16,10 +16,18 @@
 		553562B821C0825C00FE681E /* test1.frc in CopyFiles */ = {isa = PBXBuildFile; fileRef = 553562B621C0819800FE681E /* test1.frc */; };
 		553562BB21C1816000FE681E /* parser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 553562B921C1815F00FE681E /* parser.cpp */; };
 		553562BE21C1817B00FE681E /* tokenizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 553562BC21C1817B00FE681E /* tokenizer.cpp */; };
+		553562BF21C4528A00FE681E /* libforgelib.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5535629C21C047C800FE681E /* libforgelib.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
 		553562B221C06C4800FE681E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5535628621C0475700FE681E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5535629B21C047C800FE681E;
+			remoteInfo = forgelib;
+		};
+		553562C021C452B300FE681E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 5535628621C0475700FE681E /* Project object */;
 			proxyType = 1;
@@ -71,6 +79,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				553562BF21C4528A00FE681E /* libforgelib.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -177,6 +186,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				553562C121C452B300FE681E /* PBXTargetDependency */,
 			);
 			name = forgec;
 			productName = forgec;
@@ -292,6 +302,11 @@
 			target = 5535629B21C047C800FE681E /* forgelib */;
 			targetProxy = 553562B221C06C4800FE681E /* PBXContainerItemProxy */;
 		};
+		553562C121C452B300FE681E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5535629B21C047C800FE681E /* forgelib */;
+			targetProxy = 553562C021C452B300FE681E /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -301,7 +316,7 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
@@ -360,7 +375,7 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
@@ -412,6 +427,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = RCKXACKVZS;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = $PROJECT_DIR/forgelib/;
 			};
 			name = Debug;
 		};
@@ -421,6 +437,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = RCKXACKVZS;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = $PROJECT_DIR/forgelib/;
 			};
 			name = Release;
 		};

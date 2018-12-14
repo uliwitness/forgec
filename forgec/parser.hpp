@@ -11,6 +11,7 @@
 
 #include <vector>
 #include "tokenizer.hpp"
+#include "forgelib.hpp"
 
 
 namespace forge {
@@ -32,27 +33,29 @@ namespace forge {
 		}
 	};
 	
-	class value {
+	class handler_call : public stack_suitable_value {
 	public:
-		~value() {}
+		std::string							mName;
+		std::vector<stack_suitable_value *>	mParameters;
+
+		virtual void		set( int64_t inNum );
+		virtual int64_t		get_int64() const;
 		
-		std::string	mValue;
+		virtual void		set( double inNum );
+		virtual double		get_double() const;
 		
-		void	print( std::ostream &dest ) {
-			dest << mValue;
-		}
-	};
-	
-	class handler_call {
-	public:
-		std::string			mName;
-		std::vector<value>	mParameters;
+		virtual void		set( std::string inString );
+		virtual std::string	get_string() const;
+		
+		virtual void		set_value_for_key( const value& inValue, const std::string &inKey );
+		virtual void		get_value_for_key( value& outValue, const std::string &inKey ) const;
+		
+		virtual void		copy_to( value &dest ) const;
 
 		void	print( std::ostream &dest ) {
 			dest << mName;
 			for (auto p : mParameters) {
-				dest << " ";
-				p.print(dest);
+				dest << " " << p->get_string();
 			}
 		}
 	};
@@ -61,7 +64,7 @@ namespace forge {
 	public:
 		std::string							mName;
 		std::vector<parameter_declaration>	mParameters;
-		std::vector<handler_call>			mCommands;
+		std::vector<handler_call *>			mCommands;
 		
 		void	print( std::ostream &dest ) {
 			dest << "on " << mName;
@@ -73,7 +76,7 @@ namespace forge {
 			
 			for (auto c : mCommands) {
 				dest << "\t";
-				c.print(dest);
+				c->print(dest);
 				dest << std::endl;
 			}
 			dest << "end " << mName << std::endl;
@@ -82,9 +85,15 @@ namespace forge {
 	
 	class script {
 	public:
-		std::vector<handler_definition>	mHandlers;
+		std::vector<handler_definition>		mHandlers;
 		
+		template<class T>
+		T *	take_ownership_of(T *inValue) { mValuePool.push_back(std::unique_ptr<stack_suitable_value>(inValue)); return inValue; }
+
 		void	print( std::ostream &dest ) { for (auto h : mHandlers) { h.print(dest); } }
+		
+	protected:
+		std::vector<std::unique_ptr<stack_suitable_value>> mValuePool;
 	};
 	
 	class parser {
@@ -97,9 +106,10 @@ namespace forge {
 		
 		void	parse_handler( identifier_type inType, handler_definition &outHandler );
 		void	parse_parameter_declaration( std::vector<parameter_declaration> &outParameters );
-		value	parse_one_value();
-		void	parse_one_line( handler_definition &outHandler );
-		
+		stack_suitable_value	*parse_expression();
+		stack_suitable_value	*parse_one_value();
+		void					parse_one_line( handler_definition &outHandler );
+
 		void	throw_parse_error( const char *msg ) __attribute__((noreturn));
 		
 		const token			*expect_token_type( token_type inType, skip_type inSkip = skip_type::skip );
@@ -107,8 +117,9 @@ namespace forge {
 		const std::string	*expect_unquoted_string( const std::string inStr = std::string() );
 		const std::string	*expect_string();
 
-		std::vector<token> 					*mTokens;
+		std::vector<token> 					*mTokens = nullptr;
 		std::vector<token>::const_iterator	mCurrToken;
+		script								*mScript = nullptr;
 	};
 	
 }

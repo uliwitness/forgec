@@ -131,7 +131,38 @@ void	forge::parser::parse_one_line( handler_definition &outHandler )
 {
 	skip_empty_lines();
 	
-	if (const std::string *handlerName = expect_unquoted_string()) {
+	if (expect_identifier(identifier_put)) {
+		handler_call	*newCall = mScript->take_ownership_of(new handler_call);
+		newCall->mParameters.push_back(parse_expression());
+		if(expect_identifier(identifier_into)) {
+			newCall->mParameters.push_back(parse_expression());
+			newCall->mName = "assign_to";
+		} else if(expect_identifier(identifier_before)) {
+			newCall->mParameters.push_back(parse_expression());
+			newCall->mName = "prefix_to";
+		} else if(expect_identifier(identifier_after)) {
+			newCall->mParameters.push_back(parse_expression());
+			newCall->mName = "append_to";
+		} else {
+			newCall->mName = "put";
+
+			if (expect_identifier(identifier_comma_operator)) {
+				while (!expect_token_type(newline_token, peek)) {
+					newCall->mParameters.push_back(parse_expression());
+					
+					if (!expect_identifier(identifier_comma_operator)) {
+						break;
+					}
+				}
+			}
+		}
+		
+		if (expect_token_type(newline_token) == nullptr) {
+			throw_parse_error("Expected end of line");
+		}
+		
+		outHandler.mCommands.push_back(newCall);
+	} else if (const std::string *handlerName = expect_unquoted_string()) {
 		handler_call	*newCall = mScript->take_ownership_of(new handler_call);
 		newCall->mName = *handlerName;
 		

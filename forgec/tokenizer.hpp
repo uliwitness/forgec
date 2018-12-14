@@ -39,6 +39,8 @@ namespace forge {
 									X(repeat) \
 									X(with) \
 									X(for) \
+									X(each) \
+									X(times) \
 									X(down) \
 									X(while) \
 									X(until) \

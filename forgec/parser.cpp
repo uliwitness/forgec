@@ -127,7 +127,7 @@ forge::stack_suitable_value	*forge::parser::parse_one_value()
 }
 
 
-void	forge::parser::parse_one_line( handler_definition &outHandler )
+void	forge::parser::parse_one_line( std::vector<handler_call *> &outCommands )
 {
 	skip_empty_lines();
 	
@@ -161,7 +161,73 @@ void	forge::parser::parse_one_line( handler_definition &outHandler )
 			throw_parse_error("Expected end of line");
 		}
 		
-		outHandler.mCommands.push_back(newCall);
+		outCommands.push_back(newCall);
+	} else if (expect_identifier(identifier_repeat)) {
+		loop_call	*newCall = mScript->take_ownership_of(new loop_call);
+		if (expect_identifier(identifier_while)) {
+			newCall->mName = "while";
+			newCall->mParameters.push_back(parse_expression());
+		} else if (expect_identifier(identifier_with)) {
+			const std::string *varName = expect_unquoted_string();
+			if (varName == nullptr) {
+				throw_parse_error("Expected repeated variable name");
+			}
+			if (!expect_identifier(identifier_equals_operator)) {
+				throw_parse_error("Expected = after variable name");
+			}
+			stack_suitable_value *startNum = parse_expression();
+			int stepSize = 1;
+			if (expect_identifier(identifier_down)) {
+				stepSize = -1;
+			}
+			if (!expect_identifier(identifier_to)) {
+				throw_parse_error("Expected 'to' after start number");
+			}
+			stack_suitable_value *endNum = parse_expression();
+			newCall->mName = "for";
+			static_string *counterVarName = mScript->take_ownership_of(new static_string(*varName));
+			static_int64 *stepSizeValue = mScript->take_ownership_of(new static_int64(stepSize));
+			newCall->mParameters.push_back(counterVarName);
+			newCall->mParameters.push_back(startNum);
+			newCall->mParameters.push_back(endNum);
+			newCall->mParameters.push_back(stepSizeValue);
+		} else if (expect_identifier(identifier_for)) {
+			newCall->mName = "for";
+			static_string *counterVarName = mScript->take_ownership_of(new static_string(""));
+			static_int64 *startNum = mScript->take_ownership_of(new static_int64(1));
+			stack_suitable_value *endNum = parse_expression();
+			static_int64 *stepSizeValue = mScript->take_ownership_of(new static_int64(1));
+			newCall->mParameters.push_back(counterVarName);
+			newCall->mParameters.push_back(startNum);
+			newCall->mParameters.push_back(endNum);
+			newCall->mParameters.push_back(stepSizeValue);
+
+			if (expect_identifier(identifier_times)) {
+				// Skip optional "times".
+			}
+		} else if (expect_identifier(identifier_until)) {
+			newCall->mName = "until";
+			newCall->mParameters.push_back(parse_expression());
+		} else {
+			newCall->mParameters.push_back(parse_expression());
+			
+			if (expect_identifier(identifier_times)) {
+				// Skip optional "times".
+			}
+		}
+		
+		while (mCurrToken != mTokens->end()) {
+			auto saveToken = mCurrToken;
+			if (expect_identifier(identifier_end) && expect_unquoted_string("repeat")) {
+				break;
+			} else {
+				mCurrToken = saveToken;
+			}
+			
+			parse_one_line(newCall->mCommands);
+		}
+		
+		outCommands.push_back(newCall);
 	} else if (const std::string *handlerName = expect_unquoted_string()) {
 		handler_call	*newCall = mScript->take_ownership_of(new handler_call);
 		newCall->mName = *handlerName;
@@ -178,7 +244,7 @@ void	forge::parser::parse_one_line( handler_definition &outHandler )
 			throw_parse_error("Expected end of line");
 		}
 		
-		outHandler.mCommands.push_back(newCall);
+		outCommands.push_back(newCall);
 	} else {
 		throw_parse_error("Expected handler name");
 	}
@@ -201,7 +267,7 @@ void	forge::parser::parse_handler( identifier_type inType, handler_definition &o
 				mCurrToken = saveToken;
 			}
 			
-			parse_one_line(outHandler);
+			parse_one_line(outHandler.mCommands);
 		}
 	} else {
 		throw_parse_error("Expected handler name");
@@ -358,4 +424,25 @@ void	forge::handler_call::get_value_for_key( value& outValue, const std::string 
 void	forge::handler_call::copy_to( value &dest ) const
 {
 	dest.set(std::string());
+}
+
+
+std::string	forge::loop_call::get_string() const
+{
+	std::string msg(mName);
+	msg.append("(");
+	
+	for(auto p : mParameters) {
+		msg.append(" ");
+		msg.append(p->get_string());
+	}
+	
+	msg.append(" )");
+	
+	for (auto c : mCommands) {
+		msg.append("\n");
+		msg.append(c->get_string());
+	}
+	
+	return msg;
 }

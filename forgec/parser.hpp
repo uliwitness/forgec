@@ -53,11 +53,15 @@ namespace forge {
 		virtual void		copy_to( value &dest ) const;
 
 		void	print( std::ostream &dest ) {
-			dest << mName;
-			for (auto p : mParameters) {
-				dest << " " << p->get_string();
-			}
+			dest << get_string() << std::endl;
 		}
+	};
+	
+	class loop_call: public handler_call {
+	public:
+		std::vector<handler_call *>	mCommands;
+
+		virtual std::string	get_string() const;
 	};
 	
 	class handler_definition {
@@ -108,7 +112,7 @@ namespace forge {
 		void	parse_parameter_declaration( std::vector<parameter_declaration> &outParameters );
 		stack_suitable_value	*parse_expression();
 		stack_suitable_value	*parse_one_value();
-		void					parse_one_line( handler_definition &outHandler );
+		void					parse_one_line(std::vector<handler_call *> &outCommands);
 
 		void	throw_parse_error( const char *msg ) __attribute__((noreturn));
 		

@@ -18,13 +18,23 @@ static const char* sTokenTypeStrings[] = {
 
 
 #define X(n) #n ,
-#define X2(n,m) m,
+#define X2(n,m,p) m,
 static const char* sIdentifierTypeStrings[] = {
 	IDENTIFIER_TYPES
 	nullptr
 };
 #undef X2
 #undef X
+
+#define X(n) INT_MAX,
+#define X2(n,m,p) p,
+static int sOperatorPrecedences[] = {
+	IDENTIFIER_TYPES
+	0
+};
+#undef X2
+#undef X
+
 
 
 
@@ -246,4 +256,10 @@ void	forge::tokenizer::print( std::ostream &dest )
 		dest << " " << currToken.mStartOffset << "..." << currToken.mEndOffset << "] ";
 	}
 	dest << std::endl;
+}
+
+
+int		forge::token::operator_precedence() const
+{
+	return sOperatorPrecedences[mIdentifierType];
 }

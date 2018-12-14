@@ -51,25 +51,25 @@ namespace forge {
 									X(after) \
 									X(the) \
 									X(s) \
-									X2(plus_operator,"+") \
-									X2(minus_operator,"-") \
-									X2(multiply_operator,"*") \
-									X2(divide_operator,"/") \
-									X2(dot_operator,".") \
-									X2(power_operator,"^") \
-									X2(less_than_operator,"<") \
-									X2(greater_than_operator,">") \
-									X2(equals_operator,"=") \
-									X2(comma_operator,",") \
-									X2(open_parenthesis_operator,"(") \
-									X2(close_parenthesis_operator,")") \
-									X2(ampersand_operator,"&") \
-									X2(apostrophe_operator,"'") \
-									X2(at_operator,"@")
+									X2(plus_operator, "+", 1000) \
+									X2(minus_operator, "-", 1000) \
+									X2(multiply_operator, "*", 2000) \
+									X2(divide_operator, "/", 2000) \
+									X2(dot_operator,".", 4000) \
+									X2(power_operator, "^", 3000) \
+									X2(less_than_operator, "<", 900) \
+									X2(greater_than_operator, ">", 900) \
+									X2(equals_operator, "=", 900) \
+									X2(comma_operator, ",", 100) \
+									X2(open_parenthesis_operator, "(", 100 ) \
+									X2(close_parenthesis_operator, ")", 100 ) \
+									X2(ampersand_operator,"&", 600) \
+									X2(apostrophe_operator, "'", 4000) \
+									X2(at_operator, "@", 100)
 
 	
 #define X(n) identifier_ ## n,
-#define X2(n,m) identifier_ ## n,
+#define X2(n,m,p) identifier_ ## n,
 	enum identifier_type {
 		IDENTIFIER_TYPES
 		identifier_INVALID
@@ -81,7 +81,9 @@ namespace forge {
 	class token {
 	public:
 		bool	is_identifier( enum identifier_type inIdentifier ) const { return (mType == identifier_token || mType == operator_token) && (mIdentifierType == inIdentifier || inIdentifier == identifier_INVALID); }
-		
+
+		int		operator_precedence() const;
+
 		enum token_type			mType = whitespace_token;
 		enum identifier_type	mIdentifierType = identifier_INVALID;
 		size_t					mStartOffset = 0;
@@ -95,7 +97,7 @@ namespace forge {
 		tokenizer() {}
 		
 		void	add_tokens_from( std::istream &inStream, std::string inFileName );
-		
+
 		void	print( std::ostream &dest );
 		
 		std::vector<token>	mTokens;

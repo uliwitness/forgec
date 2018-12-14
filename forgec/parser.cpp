@@ -57,17 +57,30 @@ void	forge::parser::parse_parameter_declaration( std::vector<parameter_declarati
 forge::stack_suitable_value	*forge::parser::parse_expression()
 {
 	stack_suitable_value	*theOperand = parse_one_value();
+	int						lastOperatorPrecedence = 0;
 	const token *operatorToken = nullptr;
+	handler_call* prevCall = nullptr;
+	
 	while (!expect_identifier(identifier_comma_operator, peek)
 		   && !expect_identifier(identifier_close_parenthesis_operator, peek)
 		   && (operatorToken = expect_token_type(operator_token))) {
 		stack_suitable_value	*firstOperand = theOperand;
 		stack_suitable_value	*secondOperand = parse_one_value();
+		
 		handler_call *operation = mScript->take_ownership_of(new handler_call);
 		operation->mName = operatorToken->mText;
-		operation->mParameters.push_back( firstOperand );
-		operation->mParameters.push_back( secondOperand );
-		theOperand = operation;
+
+		if( operatorToken->operator_precedence() > lastOperatorPrecedence
+		   && (prevCall = dynamic_cast<handler_call*>(theOperand)) ) {
+			
+			operation->mParameters.push_back( prevCall->mParameters[1] );
+			operation->mParameters.push_back( secondOperand );
+			prevCall->mParameters[1] = operation;
+		} else {
+			operation->mParameters.push_back( firstOperand );
+			operation->mParameters.push_back( secondOperand );
+			theOperand = operation;
+		}
 	}
 	return theOperand;
 }

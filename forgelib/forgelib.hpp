@@ -311,6 +311,30 @@ namespace forge {
 	protected:
 		double mDouble;
 	};
+
+	class static_map : public stack_suitable_value {
+	public:
+		static_map();
+		static_map( const static_map& inOriginal );
+		static_map( const value& inValue, const std::string& inKey );
+		~static_map();
+
+		virtual int64_t		get_int64() const;
+		
+		virtual double		get_double() const;
+		
+		virtual std::string	get_string() const;
+		
+		virtual void		set_value_for_key( const value& inValue, const std::string &inKey );
+		virtual void		get_value_for_key( value& outValue, const std::string &inKey ) const;
+		
+		virtual void		copy_to( value &dest ) const;
+		
+		virtual value_data_type	data_type() const { return value_data_type_map; }
+	
+	public:
+		std::map<std::string,variant>	mMap;
+	};
 }
 
 #pragma GCC visibility pop

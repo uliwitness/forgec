@@ -35,10 +35,22 @@ namespace forge {
 	};
 	
 	
+	class syntax_c_parameter {
+	public:
+		std::string		mName;
+		std::string		mType;
+		size_t			mParameterIndex;
+		
+		void	print( std::ostream &dest ) {
+			dest << ", " << mParameterIndex << ": " << mType << " " << mName;
+		}
+	};
+	
 	class syntax_label {
 	public:
 		std::vector<std::string>	mLabels;
 		forge::value_data_type		mType;
+		std::string					mCParameterName;
 		
 		void	print( std::ostream &dest ) {
 			for (auto currLabel : mLabels) {
@@ -52,15 +64,18 @@ namespace forge {
 	
 	class syntax_command {
 	public:
-		std::string					mCName;
-		std::vector<syntax_label>	mParameters;
+		std::string									mCName;
+		std::map<std::string,syntax_c_parameter>	mCParameters;
+		std::vector<syntax_label>					mParameters;
 		
 		void	print( std::ostream &dest ) {
-			dest << mCName << " -> ";
+			dest << mCName << "(";
+			for (auto currParameter : mCParameters) {
+				currParameter.second.print(dest);
+			}
+			dest << " ) -> ";
 			for (auto currParameter : mParameters) {
-				dest << "[";
 				currParameter.print(dest);
-				dest << "]";
 			}
 		}
 	};
@@ -177,6 +192,7 @@ namespace forge {
 		void	skip_empty_lines();
 		void	skip_rest_of_line();
 		
+		void	parse_import_statement();
 		void	parse_handler( identifier_type inType, handler_definition &outHandler );
 		void	parse_parameter_declaration( std::vector<parameter_declaration> &outParameters );
 		bool	combine_binary_operator_tokens_if_appropriate( identifier_type &operator1, identifier_type operator2 );

@@ -199,6 +199,85 @@ void	forge::variant_string::copy_to( value &dest ) const
 	dest.set(*mValue.mString);
 }
 
+
+#pragma mark -
+
+
+forge::static_map::static_map( const static_map& inOriginal )
+{
+	mMap.insert(inOriginal.mMap.begin(), inOriginal.mMap.end());
+}
+
+forge::static_map::static_map( const value& inValue, const std::string& inKey )
+{
+	set_value_for_key(inValue, inKey);
+}
+
+forge::static_map::~static_map()
+{
+}
+
+int64_t		forge::static_map::get_int64() const
+{
+	throw std::runtime_error("Expected integer, found a list.");
+}
+
+double		forge::static_map::get_double() const
+{
+	throw std::runtime_error("Expected number, found a list.");
+}
+
+std::string	forge::static_map::get_string() const
+{
+	std::string str;
+	bool		isFirst = true;
+	
+	for (auto currPair : mMap) {
+		if (isFirst) {
+			isFirst = false;
+		} else {
+			str.append("\n");
+		}
+		str.append(currPair.first);
+		str.append(":");
+		std::string valStr(currPair.second.get_string());
+		size_t searchOffs = 0;
+		while (searchOffs < valStr.length()) {
+			size_t pos = valStr.find_first_of("\n¬", searchOffs + 1);
+			if (pos == std::string::npos) {
+				break;
+			}
+			valStr.insert(pos, "¬");
+			searchOffs = pos + 2;
+		}
+		str.append(valStr);
+	}
+	
+	return str;
+}
+
+void		forge::static_map::set_value_for_key( const value& inValue, const std::string &inKey )
+{
+	variant &dest = mMap[inKey];
+	inValue.copy_to(dest);
+}
+
+void		forge::static_map::get_value_for_key( value& outValue, const std::string &inKey ) const
+{
+	auto foundValue = mMap.find(inKey);
+	if (foundValue != mMap.end()) {
+		foundValue->second.copy_to(outValue);
+	}
+}
+
+void	forge::static_map::copy_to( value &dest ) const
+{
+	for (auto currPair : mMap) {
+		dest.set_value_for_key(currPair.second, currPair.first);
+	}
+}
+
+
 #pragma mark -
 
 

@@ -13,10 +13,10 @@
 
 
 #define DATA_TYPE_FLAGS			X(int64) \
-X(double) \
-X(string) \
-X(map) \
-X(NONE)
+								X(double) \
+								X(string) \
+								X(map) \
+								X(NONE)
 
 #define X(n)	{ forge::value_data_type_ ## n, #n },
 static struct { forge::value_data_type flag; const char* flagname; }	flags[] = {
@@ -345,11 +345,14 @@ void	forge::parser::parse_one_line( std::vector<handler_call *> &outCommands )
 				if (!newCall) {
 					newCall = mScript->take_ownership_of(new handler_call);
 					newCall->mName = currCmd.mCName;
+					newCall->mParameters.resize(currCmd.mCParameters.size(), nullptr);
 					outCommands.push_back(newCall);
 				}
 				if (currLabel.mType != value_data_type_NONE) {
 					forge::stack_suitable_value	*param = parse_one_value();
-					newCall->mParameters.push_back(param);
+					syntax_c_parameter &cParameter = currCmd.mCParameters[currLabel.mCParameterName];
+					size_t paramIndex = cParameter.mParameterIndex;
+					newCall->mParameters[paramIndex] = param;
 				}
 			}
 			if (foundCommand) {
@@ -488,6 +491,76 @@ const std::string	*forge::parser::expect_unquoted_string_or_operator( const std:
 }
 
 
+void	forge::parser::parse_import_statement()
+{
+	const std::string *cName = expect_unquoted_string_or_operator();
+	if (!cName) {
+		throw_parse_error("Expected C function name (identifier) after 'import'.");
+	}
+	syntax_command	cmd;
+	cmd.mCName = *cName;
+	
+	if (!expect_identifier(identifier_open_parenthesis_operator)) {
+		throw_parse_error("Expected '(' and parameter list after C function name in import.");
+	}
+	
+	size_t	parameterIndex = 0;
+	
+	while (!expect_token_type(newline_token, peek) && !expect_identifier(identifier_close_parenthesis_operator, peek)) {
+		const std::string *paramType = expect_unquoted_string();
+		if (!paramType) {
+			throw_parse_error("Expected parameter type here.");
+		}
+		const std::string *paramName = expect_unquoted_string();
+		if (!paramName) {
+			throw_parse_error("Expected parameter name here.");
+		}
+		
+		cmd.mCParameters[*paramName] = syntax_c_parameter{ .mName = *paramName, .mType = *paramType, .mParameterIndex = parameterIndex };
+		++parameterIndex;
+		
+		if (!expect_identifier(identifier_comma_operator)) {
+			break;
+		}
+	}
+	
+	if (!expect_identifier(identifier_close_parenthesis_operator)) {
+		throw_parse_error("Expected ')' at end of C function parameter list in import.");
+	}
+	
+	if (!expect_identifier(identifier_as)) {
+		throw_parse_error("Expected 'as' after C function in import.");
+	}
+	
+	while (!expect_token_type(newline_token, peek)) {
+		syntax_label	label;
+		while (!expect_identifier(identifier_less_than_operator, peek) && !expect_token_type(newline_token, peek)) {
+			const std::string *labelWord = expect_unquoted_string_or_operator();
+			if (!labelWord) {
+				throw_parse_error("Expected parameter label or '<' introducing parameter here.");
+			}
+			label.mLabels.push_back(*labelWord);
+		}
+		
+		if (expect_identifier(identifier_less_than_operator)) {
+			const std::string *paramName = expect_unquoted_string();
+			if (!paramName) {
+				throw_parse_error("Expected a <parameter type> here.");
+			}
+			
+			label.mType = value_data_type_int64;
+			label.mCParameterName = *paramName;
+			
+			if (!expect_identifier(identifier_greater_than_operator)) {
+				throw_parse_error("Expected '>' after parameter.");
+			}
+		}
+		cmd.mParameters.push_back(label);
+	}
+	mCommands.push_back(cmd);
+}
+
+
 void	forge::parser::parse( std::vector<token>& inTokens, script &outScript )
 {
 	mTokens = &inTokens;
@@ -504,42 +577,7 @@ void	forge::parser::parse( std::vector<token>& inTokens, script &outScript )
 			mCurrHandler = nullptr;
 			outScript.mHandlers.push_back(theHandler);
 		} else if (expect_identifier(identifier_import)) {
-			const std::string *cName = expect_unquoted_string_or_operator();
-			if (!cName) {
-				throw_parse_error("Expected C function name (identifier) after 'import'.");
-			}
-			
-			if (!expect_identifier(identifier_as)) {
-				throw_parse_error("Expected 'as' after C function name in import.");
-			}
-			
-			syntax_command	cmd;
-			cmd.mCName = *cName;
-			while (!expect_token_type(newline_token, peek)) {
-				syntax_label	label;
-				while (!expect_identifier(identifier_less_than_operator, peek) && !expect_token_type(newline_token, peek)) {
-					const std::string *labelWord = expect_unquoted_string_or_operator();
-					if (!labelWord) {
-						throw_parse_error("Expected parameter label or '<' introducing parameter here.");
-					}
-					label.mLabels.push_back(*labelWord);
-				}
-				
-				if (expect_identifier(identifier_less_than_operator)) {
-					const std::string *paramType = expect_unquoted_string();
-					if (!paramType) {
-						throw_parse_error("Expected a <parameter type> here.");
-					}
-
-					label.mType = value_data_type_int64;
-					
-					if (!expect_identifier(identifier_greater_than_operator)) {
-						throw_parse_error("Expected '>' after parameter.");
-					}
-				}
-				cmd.mParameters.push_back(label);
-			}
-			mCommands.push_back(cmd);
+			parse_import_statement();
 		}
 	}
 }

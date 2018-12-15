@@ -21,6 +21,19 @@ namespace forge {
 		peek
 	};
 	
+	class parse_error : public std::exception {
+	public:
+		parse_error( const std::string &str, const std::string& fileName, size_t offsetInFile, size_t lineNumber, size_t offsetInLine ) : mMessage(str), mFileName(fileName), mOffsetInFile(offsetInFile), mLineNumber(lineNumber), mOffsetInLine(offsetInLine) {}
+		
+		virtual const char* what() { std::string msg(mFileName); msg.append(":"); msg.append(std::to_string(mLineNumber)); msg.append(":"); msg.append(std::to_string(mOffsetInLine)); msg.append(": error: "); msg.append(mMessage); return msg.c_str(); }
+		
+		std::string	mMessage;
+		std::string	mFileName;
+		size_t		mOffsetInFile;
+		size_t		mLineNumber;
+		size_t		mOffsetInLine;
+	};
+	
 	class parameter_declaration {
 	public:
 		std::string	mName;
@@ -71,19 +84,24 @@ namespace forge {
 		std::vector<handler_call *>			mCommands;
 		
 		void	print( std::ostream &dest ) {
-			dest << "on " << mName;
-			for (auto p : mParameters) {
-				dest << " ";
+			dest << mName << "(";
+			bool isFirst = true;
+			for(auto p : mParameters) {
+				if (isFirst) {
+					isFirst = false;
+				} else {
+					dest << ", ";
+				}
 				p.print(dest);
 			}
-			dest << std::endl;
+			dest << ") {" << std::endl;
 			
 			for (auto c : mCommands) {
 				dest << "\t";
 				c->print(dest);
-				dest << std::endl;
+//				dest << std::endl;
 			}
-			dest << "end " << mName << std::endl;
+			dest << "}" << std::endl;
 		}
 	};
 	
@@ -110,6 +128,7 @@ namespace forge {
 		
 		void	parse_handler( identifier_type inType, handler_definition &outHandler );
 		void	parse_parameter_declaration( std::vector<parameter_declaration> &outParameters );
+		bool	combine_binary_operator_tokens_if_appropriate( identifier_type &operator1, identifier_type operator2 );
 		stack_suitable_value	*parse_expression();
 		stack_suitable_value	*parse_one_value();
 		void					parse_one_line(std::vector<handler_call *> &outCommands);

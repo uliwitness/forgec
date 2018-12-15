@@ -8,21 +8,19 @@
 
 #include "parser.hpp"
 #include <iostream>
+#include <string>
+#include <stdexcept>
 
 
 void	forge::parser::throw_parse_error( const char *msg )
 {
-	std::string	combinedMsg(msg);
-	
-	combinedMsg.append(" at ");
-	if (mCurrToken != mTokens->end()) {
-		combinedMsg.append(std::to_string(mCurrToken->mStartOffset));
-	} else {
-		combinedMsg.append("end of file");
+	std::string	combinedMsg;
+	token currToken = (mCurrToken != mTokens->end()) ? *mCurrToken : mTokens->back();
+	if (mCurrToken == mTokens->end()) {
+		currToken.mStartOffset = currToken.mEndOffset; // Make sure we indicate past *end* of last token.
 	}
-	combinedMsg.append(".");
 	
-	throw std::runtime_error(combinedMsg);
+	throw forge::parse_error(msg, currToken.mFileName, currToken.mStartOffset, currToken.mLineNumber, currToken.mStartOffset - currToken.mLineStartOffset);
 }
 
 
@@ -42,7 +40,7 @@ void	forge::parser::parse_parameter_declaration( std::vector<parameter_declarati
 		}
 		
 		if (newParam.mName.length() == 0) {
-			throw_parse_error("Expected parameter name ");
+			throw_parse_error("Expected parameter name here.");
 		}
 		
 		outParameters.push_back(newParam);
@@ -51,6 +49,25 @@ void	forge::parser::parse_parameter_declaration( std::vector<parameter_declarati
 			break;
 		}
 	}
+}
+
+
+bool	forge::parser::combine_binary_operator_tokens_if_appropriate( identifier_type &operator1, identifier_type operator2 ) {
+	if (operator1 == identifier_ampersand_operator && operator2 == identifier_ampersand_operator) {
+		operator1 = identifier_double_ampersand_operator;
+		return true;
+	} else if (operator1 == identifier_less_than_operator && operator2 == identifier_equals_operator) {
+		operator1 = identifier_less_equal_operator;
+		return true;
+	} else if (operator1 == identifier_greater_than_operator && operator2 == identifier_equals_operator) {
+		operator1 = identifier_greater_equal_operator;
+		return true;
+	} else if (operator1 == identifier_less_than_operator && operator2 == identifier_greater_than_operator) {
+		operator1 = identifier_not_equal_operator;
+		return true;
+	}
+	
+	return false;
 }
 
 
@@ -65,10 +82,19 @@ forge::stack_suitable_value	*forge::parser::parse_expression()
 		   && !expect_identifier(identifier_close_parenthesis_operator, peek)
 		   && (operatorToken = expect_token_type(operator_token))) {
 		stack_suitable_value	*firstOperand = theOperand;
-		stack_suitable_value	*secondOperand = parse_one_value();
+		identifier_type			operatorType = operatorToken->mIdentifierType;
 		
+		const token *operatorToken2 = expect_token_type(operator_token, peek);
+		if (operatorToken2) {
+			if (combine_binary_operator_tokens_if_appropriate(operatorType, operatorToken2->mIdentifierType)) {
+				++mCurrToken;
+			}
+		}
+		
+		stack_suitable_value	*secondOperand = parse_one_value();
+
 		handler_call *operation = mScript->take_ownership_of(new handler_call);
-		operation->mName = operatorToken->mText;
+		operation->mName = tokenizer::string_from_identifier_type(operatorType);
 
 		if( operatorToken->operator_precedence() > lastOperatorPrecedence
 		   && (prevCall = dynamic_cast<handler_call*>(theOperand)) ) {
@@ -113,7 +139,7 @@ forge::stack_suitable_value	*forge::parser::parse_one_value()
 			}
 			
 			if (!expect_identifier(identifier_close_parenthesis_operator)) {
-				throw_parse_error("Expected closing bracket ");
+				throw_parse_error("Expected closing bracket here.");
 			}
 			return newCall;
 		} else {
@@ -123,7 +149,7 @@ forge::stack_suitable_value	*forge::parser::parse_one_value()
 		}
 	}
 	
-	throw_parse_error("Expected a value");
+	throw_parse_error("Expected a value here.");
 }
 
 
@@ -158,7 +184,7 @@ void	forge::parser::parse_one_line( std::vector<handler_call *> &outCommands )
 		}
 		
 		if (expect_token_type(newline_token) == nullptr) {
-			throw_parse_error("Expected end of line");
+			throw_parse_error("Expected end of line here.");
 		}
 		
 		outCommands.push_back(newCall);
@@ -170,10 +196,10 @@ void	forge::parser::parse_one_line( std::vector<handler_call *> &outCommands )
 		} else if (expect_identifier(identifier_with)) {
 			const std::string *varName = expect_unquoted_string();
 			if (varName == nullptr) {
-				throw_parse_error("Expected repeated variable name");
+				throw_parse_error("Expected repeated variable name here.");
 			}
 			if (!expect_identifier(identifier_equals_operator)) {
-				throw_parse_error("Expected = after variable name");
+				throw_parse_error("Expected = after variable name here.");
 			}
 			stack_suitable_value *startNum = parse_expression();
 			int stepSize = 1;
@@ -181,7 +207,7 @@ void	forge::parser::parse_one_line( std::vector<handler_call *> &outCommands )
 				stepSize = -1;
 			}
 			if (!expect_identifier(identifier_to)) {
-				throw_parse_error("Expected 'to' after start number");
+				throw_parse_error("Expected 'to' after start number here.");
 			}
 			stack_suitable_value *endNum = parse_expression();
 			newCall->mName = "for";
@@ -241,12 +267,12 @@ void	forge::parser::parse_one_line( std::vector<handler_call *> &outCommands )
 		}
 		
 		if (expect_token_type(newline_token) == nullptr) {
-			throw_parse_error("Expected end of line");
+			throw_parse_error("Expected end of line here.");
 		}
 		
 		outCommands.push_back(newCall);
 	} else {
-		throw_parse_error("Expected handler name");
+		throw_parse_error("Expected handler name here.");
 	}
 	
 	skip_empty_lines();
@@ -270,7 +296,7 @@ void	forge::parser::parse_handler( identifier_type inType, handler_definition &o
 			parse_one_line(outHandler.mCommands);
 		}
 	} else {
-		throw_parse_error("Expected handler name");
+		throw_parse_error("Expected handler name here.");
 	}
 }
 
@@ -399,12 +425,17 @@ std::string	forge::handler_call::get_string() const
 	std::string msg(mName);
 	msg.append("(");
 	
+	bool isFirst = true;
 	for(auto p : mParameters) {
-		msg.append(" ");
+		if (isFirst) {
+			isFirst = false;
+		} else {
+			msg.append(", ");
+		}
 		msg.append(p->get_string());
 	}
-	
-	msg.append(" )");
+
+	msg.append(")");
 	return msg;
 }
 
@@ -432,17 +463,23 @@ std::string	forge::loop_call::get_string() const
 	std::string msg(mName);
 	msg.append("(");
 	
+	bool isFirst = true;
 	for(auto p : mParameters) {
-		msg.append(" ");
+		if (isFirst) {
+			isFirst = false;
+		} else {
+			msg.append(", ");
+		}
 		msg.append(p->get_string());
 	}
 	
-	msg.append(" )");
+	msg.append(") {\n");
 	
 	for (auto c : mCommands) {
-		msg.append("\n");
+		msg.append("\t\t");
 		msg.append(c->get_string());
 	}
-	
+	msg.append("\n\t}");
+
 	return msg;
 }

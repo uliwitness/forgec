@@ -53,6 +53,8 @@ namespace forge {
 									X(after) \
 									X(the) \
 									X(s) \
+									X(import) \
+									X(as) \
 									X2(plus_operator, "+", 1000) \
 									X2(minus_operator, "-", 1000) \
 									X2(multiply_operator, "*", 2000) \
@@ -61,11 +63,15 @@ namespace forge {
 									X2(power_operator, "^", 3000) \
 									X2(less_than_operator, "<", 900) \
 									X2(greater_than_operator, ">", 900) \
+									X2(less_equal_operator, "<=", 900) \
+									X2(greater_equal_operator, ">=", 900) \
+									X2(not_equal_operator, "<>", 900) \
 									X2(equals_operator, "=", 900) \
 									X2(comma_operator, ",", 100) \
 									X2(open_parenthesis_operator, "(", 100 ) \
 									X2(close_parenthesis_operator, ")", 100 ) \
 									X2(ampersand_operator,"&", 600) \
+									X2(double_ampersand_operator,"&&", 600) \
 									X2(apostrophe_operator, "'", 4000) \
 									X2(at_operator, "@", 100)
 
@@ -90,6 +96,8 @@ namespace forge {
 		enum identifier_type	mIdentifierType = identifier_INVALID;
 		size_t					mStartOffset = 0;
 		size_t					mEndOffset = 0;
+		size_t					mLineNumber = 0;
+		size_t					mLineStartOffset = 0;
 		std::string				mText;
 		std::string				mFileName;
 	};
@@ -103,6 +111,8 @@ namespace forge {
 		void	print( std::ostream &dest );
 		
 		std::vector<token>	mTokens;
+
+		static const char*	string_from_identifier_type( identifier_type inType );
 
 	protected:
 		void	end_token( token_type nextType );

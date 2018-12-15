@@ -25,13 +25,15 @@ int main(int argc, const char * argv[]) {
 		
 		tokenizer	t;
 		t.add_tokens_from(fileStream, argv[1]);
-		t.print( std::cout );
+//		t.print( std::cout );
 		
 		parser		p;
 		script		s;
 		p.parse(t.mTokens, s);
 		
 		s.print( std::cout );
+	} catch( forge::parse_error& err ) {
+		std::cerr << err.what() << std::endl;
 	} catch( std::exception& err ) {
 		std::cerr << "error: " << err.what() << std::endl;
 	} catch( ... ) {

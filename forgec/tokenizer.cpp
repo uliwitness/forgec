@@ -36,6 +36,10 @@ static int sOperatorPrecedences[] = {
 #undef X
 
 
+const char*	forge::tokenizer::string_from_identifier_type( identifier_type inType )
+{
+	return sIdentifierTypeStrings[inType];
+}
 
 
 void	forge::tokenizer::end_token( token_type nextType )
@@ -109,6 +113,7 @@ bool	forge::tokenizer::is_operator( char currCh )
 void	forge::tokenizer::add_tokens_from( std::istream &inStream, std::string inFileName )
 {
 	mCurrToken.mFileName = inFileName;
+	mCurrToken.mLineNumber = 1;
 	mCurrToken.mStartOffset = mCurrToken.mEndOffset = 0;
 	
 	while (true) {
@@ -131,29 +136,43 @@ void	forge::tokenizer::add_tokens_from( std::istream &inStream, std::string inFi
 				
 			case '\r':
 				if (mCurrToken.mType == string_token) {
+					mCurrToken.mLineStartOffset = mCurrToken.mEndOffset + 1;
+					++mCurrToken.mLineNumber;
 					mCurrToken.mText.append(1, currCh);
 				} else if (mCurrToken.mType == comment_token) {
+					mCurrToken.mLineStartOffset = mCurrToken.mEndOffset + 1;
+					++mCurrToken.mLineNumber;
 					mCurrToken.mType = carriage_return_token;
 					mCurrToken.mText.assign(1, currCh);
 					mCurrToken.mStartOffset = mCurrToken.mEndOffset;
 					mCurrToken.mIdentifierType = identifier_INVALID;
 				} else {
+					mCurrToken.mLineStartOffset = mCurrToken.mEndOffset + 1;
 					end_token(carriage_return_token);
+					++mCurrToken.mLineNumber;
 					mCurrToken.mText.append(1, currCh);
 				}
 				break;
 
 			case '\n':
 				if (mCurrToken.mType == string_token) {
+					mCurrToken.mLineStartOffset = mCurrToken.mEndOffset + 1;
+					if (mCurrToken.mText.length() < 1 || mCurrToken.mText[mCurrToken.mText.length() -1] != '\r') {
+						++mCurrToken.mLineNumber;
+					}
 					mCurrToken.mText.append(1, currCh);
 				} else if (mCurrToken.mType == comment_token) {
+					mCurrToken.mLineStartOffset = mCurrToken.mEndOffset + 1;
+					++mCurrToken.mLineNumber;
 					mCurrToken.mType = newline_token;
 					mCurrToken.mText.assign(1, currCh);
 					mCurrToken.mStartOffset = mCurrToken.mEndOffset;
 					mCurrToken.mIdentifierType = identifier_INVALID;
 				} else {
+					mCurrToken.mLineStartOffset = mCurrToken.mEndOffset + 1;
 					if (mCurrToken.mType != carriage_return_token) {
 						end_token(newline_token);
+						++mCurrToken.mLineNumber;
 					}
 					mCurrToken.mText.append(1, currCh);
 					++mCurrToken.mEndOffset;
@@ -211,9 +230,19 @@ void	forge::tokenizer::add_tokens_from( std::istream &inStream, std::string inFi
 					mCurrToken.mType = comment_token;
 				} else if (mCurrToken.mType == comment_token) {
 					mCurrToken.mStartOffset = mCurrToken.mEndOffset;
+				} else if (mCurrToken.mType == string_token) {
+					mCurrToken.mText.append(1, currCh);
 				} else {
 					end_token(possible_comment_token);
 					mCurrToken.mText.append(1, '-');
+				}
+				break;
+				
+			case '#':
+				if (mCurrToken.mType != string_token) {
+					end_token(comment_token);
+				} else {
+					mCurrToken.mText.append(1, currCh);
 				}
 				break;
 				

@@ -12,6 +12,7 @@
 #include <string>
 #include <map>
 #include <cstdint>
+#include <cmath>
 
 
 /* The classes below are exported */
@@ -20,6 +21,15 @@
 namespace forge {
 	
 	class variant;
+	
+	enum value_data_type_ {
+		value_data_type_NONE = 0,
+		value_data_type_int64 = (1 << 0),
+		value_data_type_double = (1 << 1),
+		value_data_type_string = (1 << 2),
+		value_data_type_map = (1 << 3),
+	};
+	typedef uint32_t value_data_type;
 	
 	// Base class for our variables etc., so scripts can access them
 	//	without having to know what type they are.
@@ -38,6 +48,8 @@ namespace forge {
 		virtual void		get_value_for_key( value& outValue, const std::string &inKey ) const = 0;
 		
 		virtual void		copy_to( value &dest ) const = 0;
+		
+		virtual value_data_type	data_type() const { return value_data_type_NONE; }
 
 	protected:
 		virtual ~value() {}
@@ -92,6 +104,8 @@ namespace forge {
 		virtual void		get_value_for_key( value& outValue, const std::string &inKey ) const;
 		
 		virtual void		copy_to( value &dest ) const;
+		
+		virtual value_data_type	data_type() const { return value_data_type_int64; }
 
 	protected:
 		variant_int64( int64_t inNum ) : variant_base() { mValue.mInteger = inNum; }
@@ -114,6 +128,8 @@ namespace forge {
 		virtual void		get_value_for_key( value& outValue, const std::string &inKey ) const;
 		
 		virtual void		copy_to( value &dest ) const;
+		
+		virtual value_data_type	data_type() const { return (trunc(mValue.mDouble) != mValue.mDouble) ? value_data_type_double : value_data_type_int64; }
 
 	protected:
 		variant_double( double inNum ) : variant_base() { mValue.mDouble = inNum; }
@@ -139,6 +155,8 @@ namespace forge {
 		virtual void		get_value_for_key( value& outValue, const std::string &inKey ) const;
 		
 		virtual void		copy_to( value &dest ) const;
+		
+		virtual value_data_type	data_type() const { return value_data_type_string; }
 
 	protected:
 		variant_string( std::string inStr );
@@ -165,13 +183,13 @@ namespace forge {
 		virtual void		get_value_for_key( value& outValue, const std::string &inKey ) const;
 		
 		virtual void		copy_to( value &dest ) const;
+		
+		virtual value_data_type	data_type() const { return value_data_type_map; }
 
 	protected:
 		variant_map();
 		variant_map( const value& inValue, const std::string& inKey );
 		~variant_map();
-		
-		int mFoo = 77;
 		
 		friend class variant_base;
 	};
@@ -202,6 +220,8 @@ namespace forge {
 		
 		virtual void		copy_to( value &dest ) const	{ val().copy_to(dest); }
 
+		virtual value_data_type	data_type() const { return val().data_type(); }
+
 	protected:
 		variant_base*		val()							{ return (variant_base *) mValue; }
 		const variant_base&	val() const						{ return *(variant_base *) mValue; }
@@ -230,6 +250,8 @@ namespace forge {
 		virtual void		get_value_for_key( value& outValue, const std::string &inKey ) const;
 		
 		virtual void		copy_to( value &dest ) const;
+		
+		virtual value_data_type	data_type() const { return value_data_type_string; }
 
 	protected:
 		std::string	mString;
@@ -255,6 +277,8 @@ namespace forge {
 		virtual void		get_value_for_key( value& outValue, const std::string &inKey ) const;
 		
 		virtual void		copy_to( value &dest ) const;
+		
+		virtual value_data_type	data_type() const { return value_data_type_int64; }
 
 	protected:
 		int64_t mInteger;
@@ -281,6 +305,8 @@ namespace forge {
 		virtual void		get_value_for_key( value& outValue, const std::string &inKey ) const;
 		
 		virtual void		copy_to( value &dest ) const;
+
+		virtual value_data_type	data_type() const { return (trunc(mDouble) != mDouble) ? value_data_type_double : value_data_type_int64; }
 
 	protected:
 		double mDouble;

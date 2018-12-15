@@ -34,6 +34,10 @@ namespace forge {
 		size_t		mOffsetInLine;
 	};
 	
+	class variable_value : public static_string {
+	public:
+	};
+	
 	class parameter_declaration {
 	public:
 		std::string	mName;
@@ -77,11 +81,20 @@ namespace forge {
 		virtual std::string	get_string() const;
 	};
 	
+	class variable_entry {
+	public:
+		std::string		mName;
+		value_data_type	mTypesNeeded = value_data_type_NONE;
+
+		std::string 	flags_string();
+	};
+	
 	class handler_definition {
 	public:
-		std::string							mName;
-		std::vector<parameter_declaration>	mParameters;
-		std::vector<handler_call *>			mCommands;
+		std::string								mName;
+		std::vector<parameter_declaration>		mParameters;
+		std::vector<handler_call *>				mCommands;
+		std::map<std::string,variable_entry>	mVariables;
 		
 		void	print( std::ostream &dest ) {
 			dest << mName << "(";
@@ -96,10 +109,14 @@ namespace forge {
 			}
 			dest << ") {" << std::endl;
 			
+			for (auto v : mVariables) {
+				dest << "\tvar\t";
+				dest << v.second.mName << ": " << v.second.flags_string() << std::endl;
+			}
+
 			for (auto c : mCommands) {
 				dest << "\t";
 				c->print(dest);
-//				dest << std::endl;
 			}
 			dest << "}" << std::endl;
 		}
@@ -129,6 +146,8 @@ namespace forge {
 		void	parse_handler( identifier_type inType, handler_definition &outHandler );
 		void	parse_parameter_declaration( std::vector<parameter_declaration> &outParameters );
 		bool	combine_binary_operator_tokens_if_appropriate( identifier_type &operator1, identifier_type operator2 );
+		void					make_variable_for_name( const std::string &varName, value_data_type inTypeRequired );
+		const std::string 		*parse_variable_name( value_data_type inTypeRequired );
 		stack_suitable_value	*parse_expression();
 		stack_suitable_value	*parse_one_value();
 		void					parse_one_line(std::vector<handler_call *> &outCommands);
@@ -143,6 +162,7 @@ namespace forge {
 		std::vector<token> 					*mTokens = nullptr;
 		std::vector<token>::const_iterator	mCurrToken;
 		script								*mScript = nullptr;
+		handler_definition					*mCurrHandler = nullptr;
 	};
 	
 }

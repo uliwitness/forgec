@@ -12,6 +12,35 @@
 #include <stdexcept>
 
 
+#define DATA_TYPE_FLAGS			X(int64) \
+								X(double) \
+								X(string) \
+								X(map) \
+								X(NONE)
+
+
+
+std::string forge::variable_entry::flags_string()
+{
+#define X(n)	{ value_data_type_ ## n, #n },
+	struct { value_data_type flag; const char* flagname; }	flags[] = {
+		DATA_TYPE_FLAGS
+	};
+#undef X
+
+	std::string	result;
+	
+	for (size_t x = 0; flags[x].flag != value_data_type_NONE; ++x) {
+		if (mTypesNeeded & flags[x].flag) {
+			result.append(flags[x].flagname);
+			result.append(" ");
+		}
+	}
+	
+	return result;
+}
+
+
 void	forge::parser::throw_parse_error( const char *msg )
 {
 	std::string	combinedMsg;
@@ -114,6 +143,30 @@ forge::stack_suitable_value	*forge::parser::parse_expression()
 	return theOperand;
 }
 
+
+void	forge::parser::make_variable_for_name( const std::string &varName, value_data_type inTypeRequired )
+{
+	auto foundHandler = mCurrHandler->mVariables.find(varName);
+	if (foundHandler != mCurrHandler->mVariables.end()) {
+		foundHandler->second.mTypesNeeded |= inTypeRequired;
+	} else {
+		variable_entry	var = { .mName = varName, .mTypesNeeded = inTypeRequired };
+		mCurrHandler->mVariables[varName] = var;
+	}
+}
+
+
+const std::string *forge::parser::parse_variable_name( value_data_type inTypeRequired )
+{
+	const std::string *varName = expect_unquoted_string();
+	if (varName) {
+		make_variable_for_name(*varName, inTypeRequired);
+	}
+	
+	return varName;
+}
+
+
 forge::stack_suitable_value	*forge::parser::parse_one_value()
 {
 	if (const token *numToken = expect_token_type(integer_token)) {
@@ -146,7 +199,8 @@ forge::stack_suitable_value	*forge::parser::parse_one_value()
 			}
 			return newCall;
 		} else {
-			static_string	*theValue = mScript->take_ownership_of(new static_string);
+			make_variable_for_name( *handlername, value_data_type_NONE );
+			variable_value	*theValue = mScript->take_ownership_of(new variable_value);
 			theValue->set(*handlername);
 			return theValue;
 		}
@@ -197,7 +251,7 @@ void	forge::parser::parse_one_line( std::vector<handler_call *> &outCommands )
 			newCall->mName = "while";
 			newCall->mParameters.push_back(parse_expression());
 		} else if (expect_identifier(identifier_with)) {
-			const std::string *varName = expect_unquoted_string();
+			const std::string *varName = parse_variable_name(value_data_type_int64);
 			if (varName == nullptr) {
 				throw_parse_error("Expected repeated variable name here.");
 			}
@@ -386,7 +440,9 @@ void	forge::parser::parse( std::vector<token>& inTokens, script &outScript )
 		
 		if (expect_identifier(identifier_on)) {
 			handler_definition	theHandler;
+			mCurrHandler = &theHandler;
 			parse_handler(identifier_on, theHandler);
+			mCurrHandler = nullptr;
 			outScript.mHandlers.push_back(theHandler);
 		}
 	}

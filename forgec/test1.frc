@@ -1,6 +1,6 @@
 #!/usr/bin/env forgec
 
-import doSomething( int foo, string bar ) as this is <bar> that is another <foo>
+import doSomething( int64 foo, string bar ) as this is <bar> that is another <foo>
 
 on startUp foo, @bar, baz
 	put 1, "hello", 123.45

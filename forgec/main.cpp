@@ -29,7 +29,14 @@ int main(int argc, const char * argv[]) {
 		
 		parser		p;
 		script		s;
-		p.parse(t.mTokens, s);
+		try {
+			p.parse(t.mTokens, s);
+		} catch( ... ) {
+			p.print( std::cout );
+			s.print( std::cout );
+
+			throw;
+		}
 		
 		p.print( std::cout );
 		s.print( std::cout );

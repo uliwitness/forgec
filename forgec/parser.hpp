@@ -41,6 +41,8 @@ namespace forge {
 		std::string		mType;
 		size_t			mParameterIndex;
 		
+		value_data_type	value_data_type() const;
+		
 		void	print( std::ostream &dest ) {
 			dest << ", " << mParameterIndex << ": " << mType << " " << mName;
 		}
@@ -56,7 +58,7 @@ namespace forge {
 			for (auto currLabel : mLabels) {
 				dest << " " << currLabel;
 			}
-			dest << " <" << flags_string() << ">";
+			dest << " <" << mCParameterName << "(" << flags_string() << ")>";
 		}
 		
 		std::string 	flags_string();
@@ -119,6 +121,10 @@ namespace forge {
 		void	print( std::ostream &dest ) {
 			dest << get_string() << std::endl;
 		}
+	};
+	
+	class operator_call : public handler_call {
+	public:
 	};
 	
 	class loop_call: public handler_call {

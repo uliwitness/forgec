@@ -24,6 +24,19 @@ static struct { forge::value_data_type flag; const char* flagname; }	flags[] = {
 };
 #undef X
 
+
+forge::value_data_type	forge::syntax_c_parameter::value_data_type() const
+{
+	for (size_t x = 0; flags[x].flag != value_data_type_NONE; ++x) {
+		if (mType.compare(flags[x].flagname) == 0) {
+			return flags[x].flag;
+			break;
+		}
+	}
+	
+	return value_data_type_NONE;
+}
+
 std::string forge::syntax_label::flags_string()
 {
 	std::string	result;
@@ -120,8 +133,8 @@ forge::stack_suitable_value	*forge::parser::parse_expression()
 {
 	stack_suitable_value	*theOperand = parse_one_value();
 	int						lastOperatorPrecedence = 0;
-	const token *operatorToken = nullptr;
-	handler_call* prevCall = nullptr;
+	const token 			*operatorToken = nullptr;
+	operator_call			*prevCall = nullptr;
 	
 	while (!expect_identifier(identifier_comma_operator, peek)
 		   && !expect_identifier(identifier_close_parenthesis_operator, peek)
@@ -138,11 +151,11 @@ forge::stack_suitable_value	*forge::parser::parse_expression()
 		
 		stack_suitable_value	*secondOperand = parse_one_value();
 
-		handler_call *operation = mScript->take_ownership_of(new handler_call);
+		operator_call *operation = mScript->take_ownership_of(new operator_call);
 		operation->mName = tokenizer::string_from_identifier_type(operatorType);
 
 		if( operatorToken->operator_precedence() > lastOperatorPrecedence
-		   && (prevCall = dynamic_cast<handler_call*>(theOperand)) ) {
+		   && (prevCall = dynamic_cast<operator_call*>(theOperand)) ) {
 			
 			operation->mParameters.push_back( prevCall->mParameters[1] );
 			operation->mParameters.push_back( secondOperand );
@@ -548,7 +561,8 @@ void	forge::parser::parse_import_statement()
 				throw_parse_error("Expected a <parameter type> here.");
 			}
 			
-			label.mType = value_data_type_int64;
+			syntax_c_parameter &cParameter = cmd.mCParameters[*paramName];
+			label.mType = cParameter.value_data_type();
 			label.mCParameterName = *paramName;
 			
 			if (!expect_identifier(identifier_greater_than_operator)) {

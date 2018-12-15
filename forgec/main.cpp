@@ -31,6 +31,7 @@ int main(int argc, const char * argv[]) {
 		script		s;
 		p.parse(t.mTokens, s);
 		
+		p.print( std::cout );
 		s.print( std::cout );
 	} catch( forge::parse_error& err ) {
 		std::cerr << err.what() << std::endl;

@@ -1,4 +1,7 @@
 #!/usr/bin/env forgec
+
+import doSomething as this is <value> that is another <value2>
+
 on startUp foo, @bar, baz
 	put 1, "hello", 123.45
 	--put the name of the process into myVar
@@ -6,4 +9,8 @@ on startUp foo, @bar, baz
 	repeat with x = 1 to 50
 		put "Hello" & 4 * 5 & "World" into myVar
 	end repeat
+	repeat while mouse is not down
+		put "Click!"
+	end repeat
+	this is "Greenroot" that is another 50
 end startUp

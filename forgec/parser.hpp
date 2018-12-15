@@ -34,6 +34,38 @@ namespace forge {
 		size_t		mOffsetInLine;
 	};
 	
+	
+	class syntax_label {
+	public:
+		std::vector<std::string>	mLabels;
+		forge::value_data_type		mType;
+		
+		void	print( std::ostream &dest ) {
+			for (auto currLabel : mLabels) {
+				dest << " " << currLabel;
+			}
+			dest << " <" << flags_string() << ">";
+		}
+		
+		std::string 	flags_string();
+	};
+	
+	class syntax_command {
+	public:
+		std::string					mCName;
+		std::vector<syntax_label>	mParameters;
+		
+		void	print( std::ostream &dest ) {
+			dest << mCName << " -> ";
+			for (auto currParameter : mParameters) {
+				dest << "[";
+				currParameter.print(dest);
+				dest << "]";
+			}
+		}
+	};
+
+	
 	class variable_value : public static_string {
 	public:
 	};
@@ -139,6 +171,8 @@ namespace forge {
 	public:
 		void	parse( std::vector<token>& inTokens, script &outScript );
 		
+		void	print( std::ostream& dest );
+		
 	protected:
 		void	skip_empty_lines();
 		void	skip_rest_of_line();
@@ -157,12 +191,14 @@ namespace forge {
 		const token			*expect_token_type( token_type inType, skip_type inSkip = skip_type::skip );
 		bool				expect_identifier( identifier_type inType, skip_type inSkip = skip_type::skip );
 		const std::string	*expect_unquoted_string( const std::string inStr = std::string() );
+		const std::string	*expect_unquoted_string_or_operator( const std::string inStr = std::string() );
 		const std::string	*expect_string();
 
 		std::vector<token> 					*mTokens = nullptr;
 		std::vector<token>::const_iterator	mCurrToken;
 		script								*mScript = nullptr;
 		handler_definition					*mCurrHandler = nullptr;
+		std::vector<syntax_command>			mCommands;
 	};
 	
 }

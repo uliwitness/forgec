@@ -36,6 +36,14 @@ static int sOperatorPrecedences[] = {
 #undef X
 
 
+// Some identifiers are actually operators, so change their type to that:
+static forge::identifier_type sOperatorIdentifiers[] = {
+	forge::identifier_is,
+	forge::identifier_not,
+	forge::identifier_INVALID
+};
+
+
 const char*	forge::tokenizer::string_from_identifier_type( identifier_type inType )
 {
 	return sIdentifierTypeStrings[inType];
@@ -57,6 +65,13 @@ void	forge::tokenizer::end_token( token_type nextType )
 			for (int x = 0; sIdentifierTypeStrings[x] != nullptr; ++x) {
 				if (strcmp(sIdentifierTypeStrings[x], mCurrToken.mText.c_str()) == 0) {
 					mCurrToken.mIdentifierType = (identifier_type) x;
+					break;
+				}
+			}
+			
+			for (size_t x = 0; sOperatorIdentifiers[x] != identifier_INVALID; ++x) {
+				if (sOperatorIdentifiers[x] == mCurrToken.mIdentifierType) {
+					mCurrToken.mType = operator_token;
 					break;
 				}
 			}

@@ -65,6 +65,9 @@ bool	forge::parser::combine_binary_operator_tokens_if_appropriate( identifier_ty
 	} else if (operator1 == identifier_less_than_operator && operator2 == identifier_greater_than_operator) {
 		operator1 = identifier_not_equal_operator;
 		return true;
+	} else if (operator1 == identifier_is && operator2 == identifier_not) {
+		operator1 = identifier_not_equal_operator;
+		return true;
 	}
 	
 	return false;
@@ -198,8 +201,10 @@ void	forge::parser::parse_one_line( std::vector<handler_call *> &outCommands )
 			if (varName == nullptr) {
 				throw_parse_error("Expected repeated variable name here.");
 			}
-			if (!expect_identifier(identifier_equals_operator)) {
-				throw_parse_error("Expected = after variable name here.");
+			if (!expect_identifier(identifier_equals_operator)
+				&& !expect_identifier(identifier_is)
+				&& !expect_identifier(identifier_from)) {
+				throw_parse_error("Expected 'from' after variable name here.");
 			}
 			stack_suitable_value *startNum = parse_expression();
 			int stepSize = 1;
@@ -244,7 +249,7 @@ void	forge::parser::parse_one_line( std::vector<handler_call *> &outCommands )
 		
 		while (mCurrToken != mTokens->end()) {
 			auto saveToken = mCurrToken;
-			if (expect_identifier(identifier_end) && expect_unquoted_string("repeat")) {
+			if (expect_identifier(identifier_end) && expect_identifier(identifier_repeat)) {
 				break;
 			} else {
 				mCurrToken = saveToken;

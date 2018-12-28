@@ -58,7 +58,9 @@ namespace forge {
 			for (auto currLabel : mLabels) {
 				dest << " " << currLabel;
 			}
-			dest << " <" << mCParameterName << "(" << flags_string() << ")>";
+			if (mCParameterName.length() > 0 || mType != value_data_type_NONE) {
+				dest << " <" << mCParameterName << "(" << flags_string() << ")>";
+			}
 		}
 		
 		std::string 	flags_string();

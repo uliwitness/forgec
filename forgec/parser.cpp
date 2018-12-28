@@ -231,6 +231,8 @@ forge::stack_suitable_value	*forge::parser::parse_one_value()
 			} else {
 				mCurrToken = savedStartToken; // backtrack, that identifier wasn't a function.
 			}
+		} else {
+			throw_parse_error("Expected a value here.");
 		}
 
 		handler_call	*newCall = try_to_parse_command( mFunctions );
@@ -243,8 +245,6 @@ forge::stack_suitable_value	*forge::parser::parse_one_value()
 		theValue->set(*handlername);
 		return theValue;
 	}
-	
-	throw_parse_error("Expected a value here.");
 }
 
 

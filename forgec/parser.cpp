@@ -155,9 +155,7 @@ forge::stack_suitable_value	*forge::parser::parse_expression()
 		operation->mName = tokenizer::string_from_identifier_type(operatorType);
 
 		int		currOperatorPrecedence = operatorToken->operator_precedence();
-		if( currOperatorPrecedence > lastOperatorPrecedence
-		   && (prevCall = dynamic_cast<operator_call*>(theOperand)) ) {
-			
+		if( currOperatorPrecedence > lastOperatorPrecedence && prevCall ) {
 			operation->mParameters.push_back( prevCall->mParameters[1] );
 			operation->mParameters.push_back( secondOperand );
 			prevCall->mParameters[1] = operation;
@@ -168,6 +166,7 @@ forge::stack_suitable_value	*forge::parser::parse_expression()
 		}
 		
 		lastOperatorPrecedence = currOperatorPrecedence;
+		prevCall = operation;
 	}
 	return theOperand;
 }

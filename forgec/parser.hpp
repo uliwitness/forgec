@@ -51,7 +51,7 @@ namespace forge {
 	class syntax_label {
 	public:
 		std::vector<std::string>	mLabels;
-		forge::value_data_type		mType;
+		forge::value_data_type		mType = value_data_type_NONE;
 		std::string					mCParameterName;
 		
 		void	print( std::ostream &dest ) {
@@ -207,6 +207,7 @@ namespace forge {
 		stack_suitable_value	*parse_expression();
 		stack_suitable_value	*parse_one_value();
 		void					parse_one_line(std::vector<handler_call *> &outCommands);
+		handler_call 			*try_to_parse_command( const std::vector<syntax_command> &registeredCommands );
 
 		void	throw_parse_error( const char *msg ) __attribute__((noreturn));
 		
@@ -221,6 +222,7 @@ namespace forge {
 		script								*mScript = nullptr;
 		handler_definition					*mCurrHandler = nullptr;
 		std::vector<syntax_command>			mCommands;
+		std::vector<syntax_command>			mFunctions;
 	};
 	
 }

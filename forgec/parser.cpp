@@ -210,32 +210,92 @@ forge::stack_suitable_value	*forge::parser::parse_one_value()
 		static_string	*theValue = mScript->take_ownership_of(new static_string);
 		theValue->set(numToken->mText);
 		return theValue;
-	} else if (const std::string *handlername = expect_unquoted_string()) {
-		if (expect_identifier(identifier_open_parenthesis_operator)) {
-			handler_call	*newCall = mScript->take_ownership_of(new handler_call);
-			newCall->mName = *handlername;
-
-			while (!expect_identifier(identifier_close_parenthesis_operator, peek)) {
-				newCall->mParameters.push_back(parse_expression());
+	} else {
+		std::vector<token>::const_iterator savedStartToken = mCurrToken;
+		if (const std::string *handlername = expect_unquoted_string()) {
+			if (expect_identifier(identifier_open_parenthesis_operator)) {
+				handler_call	*newCall = mScript->take_ownership_of(new handler_call);
+				newCall->mName = *handlername;
 				
-				if (!expect_identifier(identifier_comma_operator)) {
-					break;
+				while (!expect_identifier(identifier_close_parenthesis_operator, peek)) {
+					newCall->mParameters.push_back(parse_expression());
+					
+					if (!expect_identifier(identifier_comma_operator)) {
+						break;
+					}
 				}
+				
+				if (!expect_identifier(identifier_close_parenthesis_operator)) {
+					throw_parse_error("Expected closing bracket here.");
+				}
+				return newCall;
+			} else {
+				mCurrToken = savedStartToken; // backtrack, that identifier wasn't a function.
 			}
-			
-			if (!expect_identifier(identifier_close_parenthesis_operator)) {
-				throw_parse_error("Expected closing bracket here.");
-			}
-			return newCall;
-		} else {
-			make_variable_for_name( *handlername, value_data_type_NONE );
-			variable_value	*theValue = mScript->take_ownership_of(new variable_value);
-			theValue->set(*handlername);
-			return theValue;
 		}
+
+		handler_call	*newCall = try_to_parse_command( mFunctions );
+		if (newCall)
+			return newCall;
+		
+		const std::string *handlername = expect_unquoted_string();
+		make_variable_for_name( *handlername, value_data_type_NONE );
+		variable_value	*theValue = mScript->take_ownership_of(new variable_value);
+		theValue->set(*handlername);
+		return theValue;
 	}
 	
 	throw_parse_error("Expected a value here.");
+}
+
+
+forge::handler_call *forge::parser::try_to_parse_command( const std::vector<syntax_command> &registeredCommands )
+{
+	bool foundCommand = false;
+	
+	handler_call	*newCall = nullptr;
+	
+	for (auto currCmd : registeredCommands) {
+		for (auto currLabel : currCmd.mParameters) {
+			bool labelsMatch = true;
+			std::vector<token>::const_iterator savedStartToken = mCurrToken;
+			for (auto currIdentifier : currLabel.mLabels) {
+				if (!expect_unquoted_string_or_operator(currIdentifier)) {
+					if (newCall) {
+						std::string msg("Expected '");
+						msg.append(currIdentifier);
+						msg.append("' here.");
+						throw_parse_error(msg.c_str());
+					} else {
+						labelsMatch = false;
+						break;
+					}
+				}
+			}
+			if (!labelsMatch) {
+				mCurrToken = savedStartToken; // Backtrack so we can try any partial matches again.
+			} else {
+				foundCommand = true;
+				if (!newCall) {
+					newCall = mScript->take_ownership_of(new handler_call);
+					newCall->mName = currCmd.mCName;
+					newCall->mParameters.resize(currCmd.mCParameters.size(), nullptr);
+				}
+				if (currLabel.mType != value_data_type_NONE) {
+					forge::stack_suitable_value	*param = parse_one_value();
+					syntax_c_parameter &cParameter = currCmd.mCParameters[currLabel.mCParameterName];
+					size_t paramIndex = cParameter.mParameterIndex;
+					newCall->mParameters[paramIndex] = param;
+				}
+			}
+		}
+		if (foundCommand) {
+			skip_empty_lines();
+			return newCall;
+		}
+	}
+
+	return nullptr;
 }
 
 
@@ -343,42 +403,14 @@ void	forge::parser::parse_one_line( std::vector<handler_call *> &outCommands )
 		
 		outCommands.push_back(newCall);
 	} else {
-		bool foundCommand = false;
-		
-		handler_call	*newCall = nullptr;
-		
-		for (auto currCmd : mCommands) {
-			for (auto currLabel : currCmd.mParameters) {
-				for (auto currIdentifier : currLabel.mLabels) {
-					if (!expect_unquoted_string_or_operator(currIdentifier)) {
-						std::string msg("Expected '");
-						msg.append(currIdentifier);
-						msg.append("' here.");
-						throw_parse_error(msg.c_str());
-					}
-				}
-				foundCommand = true;
-				if (!newCall) {
-					newCall = mScript->take_ownership_of(new handler_call);
-					newCall->mName = currCmd.mCName;
-					newCall->mParameters.resize(currCmd.mCParameters.size(), nullptr);
-					outCommands.push_back(newCall);
-				}
-				if (currLabel.mType != value_data_type_NONE) {
-					forge::stack_suitable_value	*param = parse_one_value();
-					syntax_c_parameter &cParameter = currCmd.mCParameters[currLabel.mCParameterName];
-					size_t paramIndex = cParameter.mParameterIndex;
-					newCall->mParameters[paramIndex] = param;
-				}
-			}
-			if (foundCommand) {
-				skip_empty_lines();
-				return;
-			}
+		handler_call *newCall = try_to_parse_command( mCommands );
+		if (newCall) {
+			outCommands.push_back(newCall);
+			return;
 		}
 		
 		if (const std::string *handlerName = expect_unquoted_string()) {
-			handler_call	*newCall = mScript->take_ownership_of(new handler_call);
+			newCall = mScript->take_ownership_of(new handler_call);
 			newCall->mName = *handlerName;
 			
 			while (!expect_token_type(newline_token, peek)) {
@@ -509,9 +541,18 @@ const std::string	*forge::parser::expect_unquoted_string_or_operator( const std:
 
 void	forge::parser::parse_import_statement()
 {
+	bool	isCommand = false;
+	if (expect_identifier(identifier_function)) {
+		isCommand = false;
+	} else if(expect_identifier(identifier_command)) {
+		isCommand = true;
+	} else {
+		throw_parse_error("Expected 'command' or 'function' after 'import'.");
+	}
+	
 	const std::string *cName = expect_unquoted_string_or_operator();
 	if (!cName) {
-		throw_parse_error("Expected C function name (identifier) after 'import'.");
+		throw_parse_error("Expected C function name (identifier) after 'import command/function'.");
 	}
 	syntax_command	cmd;
 	cmd.mCName = *cName;
@@ -574,7 +615,11 @@ void	forge::parser::parse_import_statement()
 		}
 		cmd.mParameters.push_back(label);
 	}
-	mCommands.push_back(cmd);
+	if (isCommand) {
+		mCommands.push_back(cmd);
+	} else {
+		mFunctions.push_back(cmd);
+	}
 }
 
 
@@ -602,6 +647,10 @@ void	forge::parser::parse( std::vector<token>& inTokens, script &outScript )
 
 void	forge::parser::print(std::ostream &dest) {
 	for (auto currCmd : mCommands) {
+		currCmd.print(dest);
+		dest << std::endl;
+	}
+	for (auto currCmd : mFunctions) {
 		currCmd.print(dest);
 		dest << std::endl;
 	}

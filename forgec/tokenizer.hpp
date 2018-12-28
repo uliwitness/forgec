@@ -58,6 +58,8 @@ namespace forge {
 									X(is) \
 									X(not) \
 									X(from) \
+									X(command) \
+									X(function) \
 									X2(plus_operator, "+", 1000) \
 									X2(minus_operator, "-", 1000) \
 									X2(multiply_operator, "*", 2000) \

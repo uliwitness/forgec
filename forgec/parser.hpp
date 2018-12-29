@@ -46,6 +46,8 @@ namespace forge {
 		void	print( std::ostream &dest ) {
 			dest << ", " << mParameterIndex << ": " << mType << " " << mName;
 		}
+
+		static forge::value_data_type	value_data_type( std::string inTypeStr );
 	};
 	
 	class syntax_label {
@@ -64,6 +66,8 @@ namespace forge {
 		}
 		
 		std::string 	flags_string();
+
+		static std::string flags_string( forge::value_data_type inType );
 	};
 	
 	class syntax_command {
@@ -71,7 +75,8 @@ namespace forge {
 		std::string									mCName;
 		std::map<std::string,syntax_c_parameter>	mCParameters;
 		std::vector<syntax_label>					mParameters;
-		
+		forge::value_data_type						mReturnType = value_data_type_NONE;
+
 		void	print( std::ostream &dest ) {
 			dest << mCName << "(";
 			for (auto currParameter : mCParameters) {
@@ -80,6 +85,9 @@ namespace forge {
 			dest << " ) -> ";
 			for (auto currParameter : mParameters) {
 				currParameter.print(dest);
+			}
+			if (mReturnType != value_data_type_NONE) {
+				dest << " => " << syntax_label::flags_string( mReturnType );
 			}
 		}
 	};

@@ -16,6 +16,7 @@
 								X(double) \
 								X(string) \
 								X(map) \
+								X(bool) \
 								X(NONE)
 
 #define X(n)	{ forge::value_data_type_ ## n, #n },
@@ -25,10 +26,10 @@ static struct { forge::value_data_type flag; const char* flagname; }	flags[] = {
 #undef X
 
 
-forge::value_data_type	forge::syntax_c_parameter::value_data_type() const
+forge::value_data_type	forge::syntax_c_parameter::value_data_type( std::string inTypeStr )
 {
 	for (size_t x = 0; flags[x].flag != value_data_type_NONE; ++x) {
-		if (mType.compare(flags[x].flagname) == 0) {
+		if (inTypeStr.compare(flags[x].flagname) == 0) {
 			return flags[x].flag;
 			break;
 		}
@@ -37,12 +38,23 @@ forge::value_data_type	forge::syntax_c_parameter::value_data_type() const
 	return value_data_type_NONE;
 }
 
+forge::value_data_type	forge::syntax_c_parameter::value_data_type() const
+{
+	return syntax_c_parameter::value_data_type(mType);
+}
+
 std::string forge::syntax_label::flags_string()
+{
+	return syntax_label::flags_string( mType );
+}
+
+
+std::string forge::syntax_label::flags_string( forge::value_data_type inType )
 {
 	std::string	result;
 	
 	for (size_t x = 0; flags[x].flag != value_data_type_NONE; ++x) {
-		if (mType & flags[x].flag) {
+		if (inType & flags[x].flag) {
 			result.append(flags[x].flagname);
 			result.append(" ");
 		}
@@ -540,9 +552,17 @@ const std::string	*forge::parser::expect_unquoted_string_or_operator( const std:
 
 void	forge::parser::parse_import_statement()
 {
+	syntax_command	cmd;
 	bool	isCommand = false;
 	if (expect_identifier(identifier_function)) {
 		isCommand = false;
+		
+		const std::string *returnType = expect_unquoted_string();
+		if (!returnType) {
+			throw_parse_error("Expected return type after 'import function'.");
+		}
+		
+		cmd.mReturnType = syntax_c_parameter::value_data_type( *returnType );
 	} else if(expect_identifier(identifier_command)) {
 		isCommand = true;
 	} else {
@@ -553,7 +573,6 @@ void	forge::parser::parse_import_statement()
 	if (!cName) {
 		throw_parse_error("Expected C function name (identifier) after 'import command/function'.");
 	}
-	syntax_command	cmd;
 	cmd.mCName = *cName;
 	
 	if (!expect_identifier(identifier_open_parenthesis_operator)) {

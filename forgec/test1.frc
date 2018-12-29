@@ -1,8 +1,8 @@
 #!/usr/bin/env forgec
 
 import command doSomething( int64 foo, string bar ) as this is <bar> that is another <foo>
-import function currentProcess() as the process
-import function Button() as the mouse
+import function bool currentProcess() as the process
+import function bool Button() as the mouse
 
 on startUp foo, @bar, baz
 	put 4+5* 7 -16

@@ -96,6 +96,7 @@ namespace forge {
 	
 	class variable_value : public static_string {
 	public:
+		explicit variable_value( std::string inStr = std::string() ) : static_string(inStr) {}
 	};
 	
 	class codegen;
@@ -157,6 +158,7 @@ namespace forge {
 	class variable_entry {
 	public:
 		std::string		mName;
+		std::string		mCppName;
 		value_data_type	mTypesNeeded = value_data_type_NONE;
 		bool			mIsParameter = false;
 
@@ -248,7 +250,7 @@ namespace forge {
 		void	parse_handler( identifier_type inType, handler_definition &outHandler );
 		void	parse_parameter_declaration( std::vector<parameter_declaration> &outParameters );
 		bool	combine_binary_operator_tokens_if_appropriate( identifier_type &operator1, identifier_type operator2 );
-		void					make_variable_for_name( const std::string &varName, value_data_type inTypeRequired );
+		void					make_variable_for_name( const std::string &varName, const std::string &cppVarName, value_data_type inTypeRequired );
 		const std::string 		*parse_variable_name( value_data_type inTypeRequired );
 		stack_suitable_value	*parse_expression();
 		stack_suitable_value	*parse_one_value();

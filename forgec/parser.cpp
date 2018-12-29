@@ -184,13 +184,13 @@ forge::stack_suitable_value	*forge::parser::parse_expression()
 }
 
 
-void	forge::parser::make_variable_for_name( const std::string &varName, value_data_type inTypeRequired )
+void	forge::parser::make_variable_for_name( const std::string &varName, const std::string &cppVarName, value_data_type inTypeRequired )
 {
 	auto foundVariable = mCurrHandler->mVariables.find(varName);
 	if (foundVariable != mCurrHandler->mVariables.end()) {
 		foundVariable->second.mTypesNeeded |= inTypeRequired;
 	} else {
-		variable_entry	var = { .mName = varName, .mTypesNeeded = inTypeRequired };
+		variable_entry	var = { .mName = varName, .mCppName = cppVarName, .mTypesNeeded = inTypeRequired };
 		mCurrHandler->mVariables[varName] = var;
 	}
 }
@@ -200,7 +200,10 @@ const std::string *forge::parser::parse_variable_name( value_data_type inTypeReq
 {
 	const std::string *varName = expect_unquoted_string();
 	if (varName) {
-		make_variable_for_name(*varName, inTypeRequired);
+		std::string cppVarName("var_");
+		cppVarName.append(*varName);
+		
+		make_variable_for_name(*varName, cppVarName, inTypeRequired);
 	}
 	
 	return varName;
@@ -245,6 +248,7 @@ forge::stack_suitable_value	*forge::parser::parse_one_value()
 			if (expect_identifier(identifier_open_parenthesis_operator)) {
 				handler_call	*newCall = mScript->take_ownership_of(new handler_call);
 				newCall->mName = *handlername;
+				newCall->mName.insert(0, "fun_");
 				
 				while (!expect_identifier(identifier_close_parenthesis_operator, peek)) {
 					newCall->mParameters.push_back(parse_expression());
@@ -269,10 +273,15 @@ forge::stack_suitable_value	*forge::parser::parse_one_value()
 		if (newCall)
 			return newCall;
 		
-		const std::string *handlername = expect_unquoted_string();
-		make_variable_for_name( *handlername, value_data_type_NONE );
+		const std::string *varName = expect_unquoted_string();
+		if (!varName) {
+			return nullptr;
+		}
+		std::string cppVarName("var_");
+		cppVarName.append(*varName);
+		make_variable_for_name( *varName, cppVarName, value_data_type_NONE );
 		variable_value	*theValue = mScript->take_ownership_of(new variable_value);
-		theValue->set_string(*handlername);
+		theValue->set_string(cppVarName);
 		return theValue;
 	}
 }
@@ -388,7 +397,9 @@ void	forge::parser::parse_one_line( std::vector<handler_call *> &outCommands )
 			}
 			stack_suitable_value *endNum = parse_expression();
 			newCall->mName = "for";
-			static_string *counterVarName = mScript->take_ownership_of(new static_string(*varName));
+			std::string cppVarName("var_");
+			cppVarName.append(*varName);
+			variable_value *counterVarName = mScript->take_ownership_of(new variable_value(cppVarName));
 			static_int64 *stepSizeValue = mScript->take_ownership_of(new static_int64(stepSize));
 			newCall->mParameters.push_back(counterVarName);
 			newCall->mParameters.push_back(startNum);
@@ -881,7 +892,7 @@ void	forge::codegen::start_encoding_script( const forge::script &inScript )
 	mCode << "#include \"forgelib.hpp\"" << std::endl << std::endl;
 	
 	for (auto &currHandler : inScript.mHandlers) {
-		mCode << "variant " << currHandler.mName << "(";
+		mCode << "forge::variant " << currHandler.mName << "(";
 		bool isFirst = true;
 		for (auto &currParam : currHandler.mParameters) {
 			if (isFirst) {
@@ -889,7 +900,7 @@ void	forge::codegen::start_encoding_script( const forge::script &inScript )
 			} else {
 				mCode << ", ";
 			}
-			mCode << "variant var_"; // TODO: Look up type in mVariables and narrow it down as necessary.
+			mCode << "forge::variant var_"; // TODO: Look up type in mVariables and narrow it down as necessary.
 			mCode << currParam.mName;
 		}
 		mCode << ");" << std::endl;
@@ -905,7 +916,7 @@ void	forge::codegen::start_encoding_script( const forge::script &inScript )
 
 void	forge::codegen::start_encoding_handler( const forge::handler_definition &inHandler )
 {
-	mCode << "variant " << inHandler.mName << "(";
+	mCode << "forge::variant " << inHandler.mName << "(";
 	bool isFirst = true;
 	for (auto &currParam : inHandler.mParameters) {
 		if (isFirst) {
@@ -913,7 +924,7 @@ void	forge::codegen::start_encoding_handler( const forge::handler_definition &in
 		} else {
 			mCode << ", ";
 		}
-		mCode << "variant var_"; // TODO: Look up type in mVariables and narrow it down as necessary.
+		mCode << "forge::variant var_"; // TODO: Look up type in mVariables and narrow it down as necessary.
 		mCode << currParam.mName;
 	}
 	mCode << ") {" << std::endl;
@@ -923,10 +934,10 @@ void	forge::codegen::start_encoding_handler( const forge::handler_definition &in
 			continue;
 		}
 		
-		mCode << "\tvariant var_"; // TODO: Narrow down type.
-		mCode << currVariable.second.mName;
+		mCode << "\tforge::variant "; // TODO: Narrow down type.
+		mCode << currVariable.second.mCppName;
 		mCode << ";" << std::endl;
-		mCode << "\tvar_" << currVariable.second.mName << ".set_string(\"" << currVariable.second.mName << "\");" << std::endl;
+		mCode << "\t" << currVariable.second.mCppName << ".set_string(\"" << currVariable.second.mName << "\");" << std::endl;
 	}
 	mCode << std::endl;
 }

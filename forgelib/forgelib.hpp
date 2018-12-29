@@ -53,7 +53,9 @@ namespace forge {
 		virtual void		get_value_for_key( value& outValue, const std::string &inKey ) const = 0;
 		
 		virtual void		copy_to( value &dest ) const = 0;
-		
+		virtual void		append( value &src ); // Append src to this.
+		virtual void		prepend( value &src ); // Insert src at the start of this.
+
 		virtual value_data_type	data_type() const { return value_data_type_NONE; }
 
 	protected:
@@ -159,7 +161,9 @@ namespace forge {
 		virtual void		get_value_for_key( value& outValue, const std::string &inKey ) const;
 		
 		virtual void		copy_to( value &dest ) const;
-		
+		virtual void		append( value &src ); // Append src to this.
+		virtual void		prepend( value &src ); // Insert src at the start of this.
+
 		virtual value_data_type	data_type() const { return value_data_type_string; }
 
 	protected:
@@ -311,6 +315,9 @@ namespace forge {
 	variant less_than_equal( forge::variant a, forge::variant b );
 	variant greater_than( forge::variant a, forge::variant b );
 	variant greater_than_equal( forge::variant a, forge::variant b );
+
+	void append_to( forge::variant a, forge::variant &b );
+	void prefix_to( forge::variant a, forge::variant &b );
 }
 
 #pragma GCC visibility pop

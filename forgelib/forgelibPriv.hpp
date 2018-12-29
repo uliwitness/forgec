@@ -85,7 +85,9 @@ class variant_string : public variant_base {
 	virtual void		get_value_for_key( value& outValue, const std::string &inKey ) const;
 	
 	virtual void		copy_to( value &dest ) const;
-	
+	virtual void		append( value &src ); // Append src to this.
+	virtual void		prepend( value &src ); // Insert src at the start of this.
+
 	virtual value_data_type	data_type() const { return value_data_type_string; }
 	
 	protected:

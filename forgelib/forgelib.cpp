@@ -15,6 +15,22 @@
 #pragma mark -
 
 
+void	forge::value::append( value &src )
+{
+	std::string result(get_string());
+	result.append(src.get_string());
+	set_string(result);
+}
+
+
+void	forge::value::prepend( value &src )
+{
+	std::string result(src.get_string());
+	result.append(get_string());
+	set_string(result);
+}
+
+
 void		forge::variant_base::set_int64( int64_t inNum )
 {
 	this->~variant_base();
@@ -272,6 +288,18 @@ void	forge::variant_string::copy_to( value &dest ) const
 }
 
 
+void	forge::variant_string::append( value &src )
+{
+	mValue.mString->append(src.get_string());
+}
+
+
+void	forge::variant_string::prepend( value &src )
+{
+	mValue.mString->insert(0, src.get_string());
+}
+
+
 #pragma mark -
 
 
@@ -515,6 +543,18 @@ void		forge::static_string::get_value_for_key( value& outValue, const std::strin
 void	forge::static_string::copy_to( value &dest ) const
 {
 	dest.set_string(mString);
+}
+
+
+void	forge::static_string::append( value &src )
+{
+	mString.append(src.get_string());
+}
+
+
+void	forge::static_string::prepend( value &src )
+{
+	mString.insert(0, src.get_string());
 }
 
 
@@ -786,7 +826,11 @@ forge::variant forge::concatenate_space( forge::variant a, forge::variant b )
 forge::variant forge::add( forge::variant a, forge::variant b )
 {
 	variant v;
-	v.set_double(a.get_double() + b.get_double());
+	if (a.data_type() & value_data_type_int64 && b.data_type() & value_data_type_int64) {
+		v.set_int64(a.get_int64() + b.get_int64());
+	} else {
+		v.set_double(a.get_double() + b.get_double());
+	}
 	return v;
 }
 
@@ -794,7 +838,11 @@ forge::variant forge::add( forge::variant a, forge::variant b )
 forge::variant forge::subtract( forge::variant a, forge::variant b )
 {
 	variant v;
-	v.set_double(a.get_double() - b.get_double());
+	if (a.data_type() & value_data_type_int64 && b.data_type() & value_data_type_int64) {
+		v.set_int64(a.get_int64() - b.get_int64());
+	} else {
+		v.set_double(a.get_double() - b.get_double());
+	}
 	return v;
 }
 
@@ -802,7 +850,11 @@ forge::variant forge::subtract( forge::variant a, forge::variant b )
 forge::variant forge::multiply( forge::variant a, forge::variant b )
 {
 	variant v;
-	v.set_double(a.get_double() * b.get_double());
+	if (a.data_type() & value_data_type_int64 && b.data_type() & value_data_type_int64) {
+		v.set_int64(a.get_int64() * b.get_int64());
+	} else {
+		v.set_double(a.get_double() * b.get_double());
+	}
 	return v;
 }
 
@@ -910,4 +962,16 @@ forge::variant forge::greater_than_equal( forge::variant a, forge::variant b )
 	}
 	
 	return v;
+}
+
+
+void forge::append_to( forge::variant a, forge::variant &b )
+{
+	b.append(a);
+}
+
+
+void forge::prefix_to( forge::variant a, forge::variant &b )
+{
+	b.prepend(a);
 }

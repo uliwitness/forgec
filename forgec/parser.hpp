@@ -217,8 +217,16 @@ namespace forge {
 	public:
 		void	start_encoding_script( const forge::script &inScript );
 		void	start_encoding_handler( const forge::handler_definition &inHandler );
+		void	start_encoding_command( const forge::handler_definition &inHandler, const forge::handler_call &inCall );
+		void	end_encoding_command( const forge::handler_definition &inHandler, const forge::handler_call &inCall );
+		void	start_encoding_handler_call( const forge::handler_call &inCall );
+		void	start_encoding_handler_call_parameter( const forge::handler_call &inCall, forge::stack_suitable_value* inValue, bool isFirst );
+		void	end_encoding_handler_call_parameter( const forge::handler_call &inCall, forge::stack_suitable_value* inValue, bool isFirst );
+		void	end_encoding_handler_call( const forge::handler_call &inCall );
 		void	end_encoding_handler( const forge::handler_definition &inHandler );
 		void	end_encoding_script( const forge::script &inScript );
+		
+		void	encode_value( forge::stack_suitable_value* inValue );
 
 		void	print( std::ostream &dest ) { dest << mCode.str(); }
 
@@ -263,6 +271,7 @@ namespace forge {
 		std::vector<syntax_command>			mFunctions;
 	};
 	
+	void generate_code( stack_suitable_value *inValue, forge::codegen& inCodegen );
 }
 
 #endif /* parser_hpp */

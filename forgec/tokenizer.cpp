@@ -109,7 +109,6 @@ bool	forge::tokenizer::is_operator( char currCh )
 		case ',':
 		case '.':
 		case '?':
-		case ':':
 		case ';':
 		case '\'':
 		case '|':

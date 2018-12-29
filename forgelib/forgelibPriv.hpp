@@ -156,6 +156,13 @@ protected:
 };
 static_assert(sizeof(variant_bool) == sizeof(variant_base), "subclasses of variant_base must be the same size.");
 
+	class Process {
+		public:
+		forge::variant 			parameters;
+		forge::static_string	name;
+		
+		Process& currentProcess() { static Process currentProcess; return currentProcess; }
+	};
 }
 	
 #pragma GCC visibility pop

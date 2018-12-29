@@ -10,15 +10,6 @@
 #include <string>
 #include "forgelib.hpp"
 
-class Process {
-public:
-	static forge::variant 		parameters;
-	static forge::static_string	name;
-};
-
-forge::variant 		Process::parameters;
-forge::static_string	Process::name;
-
 int on_main() {
 	std::cout << "Main!" << std::endl;
 	
@@ -26,12 +17,12 @@ int on_main() {
 }
 
 int main(int argc, const char * argv[]) {
-	Process::name.set_bool((argc > 0) ? argv[0] : "");
+	Process::currentProcess().name.set_string((argc > 0) ? argv[0] : "");
 	for (int x = 1; x < argc; ++x) {
 		Process::parameters.set_value_for_key(forge::static_string(argv[x]), std::to_string(x));
 	}
-	std::cout << Process::name.get_string() << std::endl;
-	std::cout << Process::parameters.get_string() << std::endl;
+	std::cout << Process::currentProcess().name.get_string() << std::endl;
+	std::cout << Process::currentProcess().parameters.get_string() << std::endl;
 
 	forge::variant		firstParam;
 

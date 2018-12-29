@@ -1,7 +1,7 @@
 #!/usr/bin/env forgec
 
 import command doSomething( int64 foo, string bar ) as this is <bar> that is another <foo>
-import function bool currentProcess() as the process
+import function bool forge::Process::currentProcess() as the process
 import function bool Button() as the mouse
 
 on startUp foo, @bar, baz

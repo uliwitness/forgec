@@ -337,15 +337,15 @@ void	forge::parser::parse_one_line( std::vector<handler_call *> &outCommands )
 		newCall->mParameters.push_back(parse_expression());
 		if(expect_identifier(identifier_into)) {
 			newCall->mParameters.push_back(parse_expression());
-			newCall->mName = "assign_to";
+			newCall->mName = "forge::assign_to";
 		} else if(expect_identifier(identifier_before)) {
 			newCall->mParameters.push_back(parse_expression());
-			newCall->mName = "prefix_to";
+			newCall->mName = "forge::prefix_to";
 		} else if(expect_identifier(identifier_after)) {
 			newCall->mParameters.push_back(parse_expression());
-			newCall->mName = "append_to";
+			newCall->mName = "forge::append_to";
 		} else {
-			newCall->mName = "put";
+			newCall->mName = "cmd_put";
 
 			if (expect_identifier(identifier_comma_operator)) {
 				while (!expect_token_type(newline_token, peek)) {
@@ -441,6 +441,7 @@ void	forge::parser::parse_one_line( std::vector<handler_call *> &outCommands )
 		if (const std::string *handlerName = expect_unquoted_string()) {
 			newCall = mScript->take_ownership_of(new handler_call);
 			newCall->mName = *handlerName;
+			newCall->mName.insert(0, "cmd_");
 			
 			while (!expect_token_type(newline_token, peek)) {
 				newCall->mParameters.push_back(parse_expression());
@@ -468,6 +469,7 @@ void	forge::parser::parse_handler( identifier_type inType, handler_definition &o
 {
 	if (const std::string *handlerName = expect_unquoted_string()) {
 		outHandler.mName = *handlerName;
+		outHandler.mName.insert(0, (inType == identifier_on) ? "cmd_" : "fun_");
 		parse_parameter_declaration(outHandler.mParameters);
 		
 		for (auto &currParameter : outHandler.mParameters) {
@@ -731,7 +733,9 @@ void	forge::handler_definition::generate_code( forge::codegen& inCodegen )
 	}
 	
 	for (auto currCommand : mCommands) {
+		inCodegen.start_encoding_command(*this, *currCommand);
 		currCommand->generate_code(inCodegen);
+		inCodegen.end_encoding_command(*this, *currCommand);
 	}
 
 	inCodegen.end_encoding_handler(*this);
@@ -752,7 +756,15 @@ void	forge::variable_entry::generate_code( forge::codegen& inCodegen )
 
 void	forge::handler_call::generate_code( forge::codegen& inCodegen )
 {
-	
+	inCodegen.start_encoding_handler_call(*this);
+	bool isFirst = true;
+	for (auto currParam : mParameters) {
+		inCodegen.start_encoding_handler_call_parameter(*this, currParam, isFirst);
+		forge::generate_code(currParam, inCodegen);
+		inCodegen.end_encoding_handler_call_parameter(*this, currParam, isFirst);
+		isFirst = false;
+	}
+	inCodegen.end_encoding_handler_call(*this);
 }
 
 
@@ -869,7 +881,7 @@ void	forge::codegen::start_encoding_script( const forge::script &inScript )
 	mCode << "#include \"forgelib.hpp\"" << std::endl << std::endl;
 	
 	for (auto &currHandler : inScript.mHandlers) {
-		mCode << "variant var_" << currHandler.mName << "(";
+		mCode << "variant " << currHandler.mName << "(";
 		bool isFirst = true;
 		for (auto &currParam : currHandler.mParameters) {
 			if (isFirst) {
@@ -877,12 +889,21 @@ void	forge::codegen::start_encoding_script( const forge::script &inScript )
 			} else {
 				mCode << ", ";
 			}
-			mCode << "variant "; // TODO: Look up type in mVariables and narrow it down as necessary.
+			mCode << "variant var_"; // TODO: Look up type in mVariables and narrow it down as necessary.
 			mCode << currParam.mName;
 		}
 		mCode << ");" << std::endl;
 	}
 	mCode << std::endl;
+
+	mCode << "int main(int argc, const char * argv[]) {" << std::endl
+	<< "\tProcess::currentProcess().name.set_string((argc > 0) ? argv[0] : \"\");" << std::endl
+	<< "\tfor (int x = 1; x < argc; ++x) {" << std::endl
+	<< "\t\tProcess::parameters.set_value_for_key(forge::static_string(argv[x]), std::to_string(x));" << std::endl
+	<< "\t}" << std::endl
+	<< std::endl
+	<< "\tcmd_startUp();" << std::endl
+	<< "}" << std::endl << std::endl;
 }
 
 
@@ -921,7 +942,62 @@ void	forge::codegen::end_encoding_handler( const forge::handler_definition &inHa
 }
 
 
+void	forge::codegen::start_encoding_command( const forge::handler_definition &inHandler, const forge::handler_call &inCall )
+{
+	mCode << "\t";
+}
+
+
+void	forge::codegen::end_encoding_command( const forge::handler_definition &inHandler, const forge::handler_call &inCall )
+{
+	mCode << ";" << std::endl;
+}
+
+
+void	forge::codegen::start_encoding_handler_call( const forge::handler_call &inHandler )
+{
+	mCode << inHandler.mName << "(";
+}
+
+
+void	forge::codegen::start_encoding_handler_call_parameter( const forge::handler_call &inHandler, stack_suitable_value *inValue, bool isFirst )
+{
+	if (!isFirst) {
+		mCode << ", ";
+	}
+}
+
+
+void	forge::codegen::end_encoding_handler_call_parameter( const forge::handler_call &inHandler, stack_suitable_value *inValue, bool isFirst )
+{
+
+}
+
+
+void	forge::codegen::end_encoding_handler_call( const forge::handler_call &inHandler )
+{
+	mCode << ")";
+}
+
+
 void	forge::codegen::end_encoding_script( const forge::script &inScript )
 {
-	
+	mCode << std::endl; // Make sure file is a nice Unix citizen and ends on a newline.
+}
+
+
+void	forge::codegen::encode_value( stack_suitable_value* inValue )
+{
+	mCode << inValue->get_string();
+}
+
+
+void forge::generate_code( stack_suitable_value *inValue, forge::codegen& inCodegen )
+{
+	handler_call *call = dynamic_cast<handler_call *>(inValue);
+	if (call) {
+		call->generate_code(inCodegen);
+	} else {
+		inCodegen.encode_value( inValue );
+	}
 }

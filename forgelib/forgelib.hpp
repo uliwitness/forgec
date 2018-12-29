@@ -29,6 +29,7 @@ namespace forge {
 		value_data_type_string = (1 << 2),
 		value_data_type_map = (1 << 3),
 		value_data_type_bool = (1 << 4),
+		value_data_type_ALL = (value_data_type_int64 | value_data_type_double | value_data_type_string | value_data_type_map | value_data_type_bool)
 	};
 	typedef uint32_t value_data_type;
 	

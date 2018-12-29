@@ -9,9 +9,10 @@
 #ifndef parser_hpp
 #define parser_hpp
 
-#include <vector>
 #include "tokenizer.hpp"
 #include "forgelib.hpp"
+#include <vector>
+#include <sstream>
 
 
 namespace forge {
@@ -97,6 +98,8 @@ namespace forge {
 	public:
 	};
 	
+	class codegen;
+	
 	class parameter_declaration {
 	public:
 		std::string	mName;
@@ -107,6 +110,8 @@ namespace forge {
 			}
 			dest << mName;
 		}
+		
+		void	generate_code( forge::codegen &inCodegen );
 	};
 	
 	class handler_call : public stack_suitable_value {
@@ -134,6 +139,8 @@ namespace forge {
 		void	print( std::ostream &dest ) {
 			dest << get_string() << std::endl;
 		}
+
+		void	generate_code( forge::codegen &inCodegen );
 	};
 	
 	class operator_call : public handler_call {
@@ -151,8 +158,10 @@ namespace forge {
 	public:
 		std::string		mName;
 		value_data_type	mTypesNeeded = value_data_type_NONE;
+		bool			mIsParameter = false;
 
 		std::string 	flags_string();
+		void			generate_code( forge::codegen &inCodegen );
 	};
 	
 	class handler_definition {
@@ -186,6 +195,8 @@ namespace forge {
 			}
 			dest << "}" << std::endl;
 		}
+		
+		void	generate_code( forge::codegen &inCodegen );
 	};
 	
 	class script {
@@ -196,9 +207,23 @@ namespace forge {
 		T *	take_ownership_of(T *inValue) { mValuePool.push_back(std::unique_ptr<stack_suitable_value>(inValue)); return inValue; }
 
 		void	print( std::ostream &dest ) { for (auto h : mHandlers) { h.print(dest); } }
+		void	generate_code( forge::codegen &codegen );
 		
 	protected:
 		std::vector<std::unique_ptr<stack_suitable_value>> mValuePool;
+	};
+	
+	class codegen {
+	public:
+		void	start_encoding_script( const forge::script &inScript );
+		void	start_encoding_handler( const forge::handler_definition &inHandler );
+		void	end_encoding_handler( const forge::handler_definition &inHandler );
+		void	end_encoding_script( const forge::script &inScript );
+
+		void	print( std::ostream &dest ) { dest << mCode.str(); }
+
+	protected:
+		std::stringstream	mCode;
 	};
 	
 	class parser {

@@ -186,9 +186,9 @@ forge::stack_suitable_value	*forge::parser::parse_expression()
 
 void	forge::parser::make_variable_for_name( const std::string &varName, value_data_type inTypeRequired )
 {
-	auto foundHandler = mCurrHandler->mVariables.find(varName);
-	if (foundHandler != mCurrHandler->mVariables.end()) {
-		foundHandler->second.mTypesNeeded |= inTypeRequired;
+	auto foundVariable = mCurrHandler->mVariables.find(varName);
+	if (foundVariable != mCurrHandler->mVariables.end()) {
+		foundVariable->second.mTypesNeeded |= inTypeRequired;
 	} else {
 		variable_entry	var = { .mName = varName, .mTypesNeeded = inTypeRequired };
 		mCurrHandler->mVariables[varName] = var;
@@ -469,6 +469,14 @@ void	forge::parser::parse_handler( identifier_type inType, handler_definition &o
 	if (const std::string *handlerName = expect_unquoted_string()) {
 		outHandler.mName = *handlerName;
 		parse_parameter_declaration(outHandler.mParameters);
+		
+		for (auto &currParameter : outHandler.mParameters) {
+			variable_entry	var;
+			var.mName = currParameter.mName;
+			var.mTypesNeeded = value_data_type_ALL;
+			var.mIsParameter = true;
+			outHandler.mVariables[currParameter.mName] = var;
+		}
 
 		while (mCurrToken != mTokens->end()) {
 			auto saveToken = mCurrToken;
@@ -680,6 +688,10 @@ void	forge::parser::parse( std::vector<token>& inTokens, script &outScript )
 			parse_import_statement();
 		}
 	}
+	
+	mCurrToken = mTokens->end();
+	mScript = nullptr;
+	mTokens = nullptr;
 }
 
 
@@ -692,6 +704,55 @@ void	forge::parser::print(std::ostream &dest) {
 		currCmd.print(dest);
 		dest << std::endl;
 	}
+}
+
+
+void	forge::script::generate_code( forge::codegen& inCodegen )
+{
+	inCodegen.start_encoding_script(*this);
+	
+	for (auto &currHandler : mHandlers) {
+		currHandler.generate_code(inCodegen);
+	}
+	
+	inCodegen.end_encoding_script(*this);
+}
+
+
+void	forge::handler_definition::generate_code( forge::codegen& inCodegen )
+{
+	inCodegen.start_encoding_handler(*this);
+	
+	for (auto &currParameter : mParameters) {
+		currParameter.generate_code(inCodegen);
+	}
+	for (auto &currVariable : mVariables) {
+		currVariable.second.generate_code(inCodegen);
+	}
+	
+	for (auto currCommand : mCommands) {
+		currCommand->generate_code(inCodegen);
+	}
+
+	inCodegen.end_encoding_handler(*this);
+}
+
+
+void	forge::parameter_declaration::generate_code( forge::codegen& inCodegen )
+{
+	
+}
+
+
+void	forge::variable_entry::generate_code( forge::codegen& inCodegen )
+{
+	
+}
+
+
+void	forge::handler_call::generate_code( forge::codegen& inCodegen )
+{
+	
 }
 
 
@@ -800,4 +861,67 @@ std::string	forge::loop_call::get_string() const
 	msg.append("\n\t}");
 
 	return msg;
+}
+
+
+void	forge::codegen::start_encoding_script( const forge::script &inScript )
+{
+	mCode << "#include \"forgelib.hpp\"" << std::endl << std::endl;
+	
+	for (auto &currHandler : inScript.mHandlers) {
+		mCode << "variant var_" << currHandler.mName << "(";
+		bool isFirst = true;
+		for (auto &currParam : currHandler.mParameters) {
+			if (isFirst) {
+				isFirst = false;
+			} else {
+				mCode << ", ";
+			}
+			mCode << "variant "; // TODO: Look up type in mVariables and narrow it down as necessary.
+			mCode << currParam.mName;
+		}
+		mCode << ");" << std::endl;
+	}
+	mCode << std::endl;
+}
+
+
+void	forge::codegen::start_encoding_handler( const forge::handler_definition &inHandler )
+{
+	mCode << "variant " << inHandler.mName << "(";
+	bool isFirst = true;
+	for (auto &currParam : inHandler.mParameters) {
+		if (isFirst) {
+			isFirst = false;
+		} else {
+			mCode << ", ";
+		}
+		mCode << "variant var_"; // TODO: Look up type in mVariables and narrow it down as necessary.
+		mCode << currParam.mName;
+	}
+	mCode << ") {" << std::endl;
+	
+	for (auto &currVariable : inHandler.mVariables) {
+		if (currVariable.second.mIsParameter) {
+			continue;
+		}
+		
+		mCode << "\tvariant var_"; // TODO: Narrow down type.
+		mCode << currVariable.second.mName;
+		mCode << ";" << std::endl;
+		mCode << "\tvar_" << currVariable.second.mName << ".set_string(\"" << currVariable.second.mName << "\");" << std::endl;
+	}
+	mCode << std::endl;
+}
+
+
+void	forge::codegen::end_encoding_handler( const forge::handler_definition &inHandler )
+{
+	mCode << "}" << std::endl << std::endl;
+}
+
+
+void	forge::codegen::end_encoding_script( const forge::script &inScript )
+{
+	
 }

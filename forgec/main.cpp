@@ -40,6 +40,10 @@ int main(int argc, const char * argv[]) {
 		
 		p.print( std::cout );
 		s.print( std::cout );
+		
+		codegen	codeGen;
+		s.generate_code(codeGen);
+		codeGen.print( std::cout );
 	} catch( forge::parse_error& err ) {
 		std::cerr << err.what() << std::endl;
 	} catch( std::exception& err ) {

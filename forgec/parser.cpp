@@ -152,7 +152,7 @@ forge::stack_suitable_value	*forge::parser::parse_expression()
 		stack_suitable_value	*secondOperand = parse_one_value();
 
 		operator_call *operation = mScript->take_ownership_of(new operator_call);
-		operation->mName = tokenizer::string_from_identifier_type(operatorType);
+		operation->mName = token::operator_function(operatorType);
 
 		int		currOperatorPrecedence = operatorToken->operator_precedence();
 		if( currOperatorPrecedence > lastOperatorPrecedence && prevCall ) {
@@ -199,15 +199,15 @@ forge::stack_suitable_value	*forge::parser::parse_one_value()
 {
 	if (const token *numToken = expect_token_type(integer_token)) {
 		static_int64	*theValue = mScript->take_ownership_of(new static_int64);
-		theValue->set(numToken->mText);
+		theValue->set_string(numToken->mText);
 		return theValue;
 	} else if (const token *numToken = expect_token_type(number_token)) {
 		static_double	*theValue = mScript->take_ownership_of(new static_double);
-		theValue->set(numToken->mText);
+		theValue->set_string(numToken->mText);
 		return theValue;
 	} else if (const token *numToken = expect_token_type(string_token)) {
 		static_string	*theValue = mScript->take_ownership_of(new static_string);
-		theValue->set(numToken->mText);
+		theValue->set_string(numToken->mText);
 		return theValue;
 	} else {
 		std::vector<token>::const_iterator savedStartToken = mCurrToken;
@@ -242,7 +242,7 @@ forge::stack_suitable_value	*forge::parser::parse_one_value()
 		const std::string *handlername = expect_unquoted_string();
 		make_variable_for_name( *handlername, value_data_type_NONE );
 		variable_value	*theValue = mScript->take_ownership_of(new variable_value);
-		theValue->set(*handlername);
+		theValue->set_string(*handlername);
 		return theValue;
 	}
 }
@@ -656,7 +656,7 @@ void	forge::parser::print(std::ostream &dest) {
 }
 
 
-void	forge::handler_call::set( int64_t inNum )
+void	forge::handler_call::set_int64( int64_t inNum )
 {
 	
 }
@@ -669,7 +669,7 @@ int64_t	forge::handler_call::get_int64() const
 
 
 
-void	forge::handler_call::set( double inNum )
+void	forge::handler_call::set_double( double inNum )
 {
 	
 }
@@ -681,8 +681,19 @@ double	forge::handler_call::get_double() const
 }
 
 
+void	forge::handler_call::set_bool( bool inBool )
+{
+	
+}
 
-void	forge::handler_call::set( std::string inString )
+
+bool	forge::handler_call::get_bool() const
+{
+	return false;
+}
+
+
+void	forge::handler_call::set_string( std::string inString )
 {
 	
 }
@@ -716,13 +727,13 @@ void	forge::handler_call::set_value_for_key( const value& inValue, const std::st
 
 void	forge::handler_call::get_value_for_key( value& outValue, const std::string &inKey ) const
 {
-	outValue.set(std::string());
+	outValue.set_string(std::string());
 }
 
 
 void	forge::handler_call::copy_to( value &dest ) const
 {
-	dest.set(std::string());
+	dest.set_string(std::string());
 }
 
 

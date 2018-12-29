@@ -106,15 +106,18 @@ namespace forge {
 		std::string							mName;
 		std::vector<stack_suitable_value *>	mParameters;
 
-		virtual void		set( int64_t inNum );
+		virtual void		set_int64( int64_t inNum );
 		virtual int64_t		get_int64() const;
 		
-		virtual void		set( double inNum );
+		virtual void		set_double( double inNum );
 		virtual double		get_double() const;
 		
-		virtual void		set( std::string inString );
+		virtual void		set_string( std::string inString );
 		virtual std::string	get_string() const;
 		
+		virtual void		set_bool( bool inBool );
+		virtual bool		get_bool() const;
+
 		virtual void		set_value_for_key( const value& inValue, const std::string &inKey );
 		virtual void		get_value_for_key( value& outValue, const std::string &inKey ) const;
 		

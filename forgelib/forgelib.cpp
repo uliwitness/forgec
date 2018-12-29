@@ -15,7 +15,7 @@
 #pragma mark -
 
 
-void		forge::variant_base::set( int64_t inNum )
+void		forge::variant_base::set_int64( int64_t inNum )
 {
 	this->~variant_base();
 	new (this) variant_int64(inNum);
@@ -26,7 +26,7 @@ int64_t		forge::variant_base::get_int64() const
 	throw std::runtime_error("Expected an integer here, found an empty string.");
 }
 	
-void		forge::variant_base::set( double inNum )
+void		forge::variant_base::set_double( double inNum )
 {
 	this->~variant_base();
 	new (this) variant_double(inNum);
@@ -37,7 +37,7 @@ double		forge::variant_base::get_double() const
 	throw std::runtime_error("Expected a number here, found an empty string.");
 }
 	
-void		forge::variant_base::set( std::string inString )
+void		forge::variant_base::set_string( std::string inString )
 {
 	this->~variant_base();
 	new (this) variant_string(inString);
@@ -48,6 +48,17 @@ std::string	forge::variant_base::get_string() const
 	return std::string();
 }
 
+void		forge::variant_base::set_bool( bool inBool )
+{
+	this->~variant_base();
+	new (this) variant_bool(inBool);
+}
+
+bool	forge::variant_base::get_bool() const
+{
+	throw std::runtime_error("Expected a boolean here, found an empty string.");
+}
+
 void	forge::variant_base::set_value_for_key( const value& inValue, const std::string &inKey )
 {
 	this->~variant_base();
@@ -56,19 +67,19 @@ void	forge::variant_base::set_value_for_key( const value& inValue, const std::st
 
 void	forge::variant_base::get_value_for_key( value& outValue, const std::string &inKey ) const
 {
-	outValue.set("");
+	outValue.set_string("");
 }
 
 void	forge::variant_base::copy_to( value &dest ) const
 {
-	dest.set("");
+	dest.set_string("");
 }
 
 
 #pragma mark -
 
 
-void		forge::variant_int64::set( int64_t inNum )
+void		forge::variant_int64::set_int64( int64_t inNum )
 {
 	mValue.mInteger = inNum;
 }
@@ -88,14 +99,19 @@ std::string	forge::variant_int64::get_string() const
 	return std::to_string(mValue.mInteger);
 }
 
+bool	forge::variant_int64::get_bool() const
+{
+	throw std::runtime_error("Expected a boolean here, found an integer.");
+}
+
 void		forge::variant_int64::get_value_for_key( value& outValue, const std::string &inKey ) const
 {
-	outValue.set("");
+	outValue.set_string("");
 }
 
 void	forge::variant_int64::copy_to( value &dest ) const
 {
-	dest.set(mValue.mInteger);
+	dest.set_int64(mValue.mInteger);
 }
 
 
@@ -110,7 +126,7 @@ int64_t		forge::variant_double::get_int64() const
 	return mValue.mDouble;
 }
 	
-void		forge::variant_double::set( double inNum )
+void		forge::variant_double::set_double( double inNum )
 {
 	mValue.mDouble = inNum;
 }
@@ -125,14 +141,58 @@ std::string	forge::variant_double::get_string() const
 	return std::to_string(mValue.mDouble);
 }
 
+bool	forge::variant_double::get_bool() const
+{
+	throw std::runtime_error("Expected a boolean here, found a number.");
+}
+
 void		forge::variant_double::get_value_for_key( value& outValue, const std::string &inKey ) const
 {
-	outValue.set("");
+	outValue.set_string("");
 }
 
 void	forge::variant_double::copy_to( value &dest ) const
 {
-	dest.set(mValue.mDouble);
+	dest.set_double(mValue.mDouble);
+}
+
+
+#pragma mark -
+
+int64_t		forge::variant_bool::get_int64() const
+{
+	throw std::runtime_error("Expected integer, found a boolean.");
+}
+
+double		forge::variant_bool::get_double() const
+{
+	throw std::runtime_error("Expected number, found a boolean.");
+}
+
+
+bool	forge::variant_bool::get_bool() const
+{
+	return mValue.mBool;
+}
+
+void	forge::variant_bool::set_bool( bool inBool )
+{
+	mValue.mBool = inBool;
+}
+
+std::string	forge::variant_bool::get_string() const
+{
+	return std::string(mValue.mBool ? "true" : "false");
+}
+
+void		forge::variant_bool::get_value_for_key( value& outValue, const std::string &inKey ) const
+{
+	outValue.set_string("");
+}
+
+void	forge::variant_bool::copy_to( value &dest ) const
+{
+	dest.set_bool(mValue.mBool);
 }
 
 
@@ -179,7 +239,7 @@ double		forge::variant_string::get_double() const
 	return num;
 }
 
-void		forge::variant_string::set( std::string inString )
+void		forge::variant_string::set_string( std::string inString )
 {
 	mValue.mString->assign(inString);
 }
@@ -189,14 +249,26 @@ std::string	forge::variant_string::get_string() const
 	return *mValue.mString;
 }
 
+
+bool	forge::variant_string::get_bool() const
+{
+	if (strcasecmp("true", mValue.mString->c_str()) == 0) {
+		return true;
+	} else if (strcasecmp("false", mValue.mString->c_str()) == 0) {
+		return false;
+	}
+	
+	throw std::runtime_error("Expected a boolean here, found a string.");
+}
+
 void		forge::variant_string::get_value_for_key( value& outValue, const std::string &inKey ) const
 {
-	outValue.set("");
+	outValue.set_string("");
 }
 
 void	forge::variant_string::copy_to( value &dest ) const
 {
-	dest.set(*mValue.mString);
+	dest.set_string(*mValue.mString);
 }
 
 
@@ -254,6 +326,16 @@ std::string	forge::static_map::get_string() const
 	}
 	
 	return str;
+}
+
+void	forge::static_map::set_bool( bool inBool )
+{
+	throw std::runtime_error("Expected list, found boolean.");
+}
+
+bool	forge::static_map::get_bool() const
+{
+	throw std::runtime_error("Expected boolean, found list.");
 }
 
 void		forge::static_map::set_value_for_key( const value& inValue, const std::string &inKey )
@@ -345,6 +427,11 @@ std::string	forge::variant_map::get_string() const
 	return str;
 }
 
+bool	forge::variant_map::get_bool() const
+{
+	throw std::runtime_error("Expected a boolean here, found a list.");
+}
+
 void		forge::variant_map::set_value_for_key( const value& inValue, const std::string &inKey )
 {
 	variant &dest = (*mValue.mMap)[inKey];
@@ -373,7 +460,7 @@ forge::static_string::static_string( std::string inStr )
 }
 
 
-void		forge::static_string::set( int64_t inNum )
+void		forge::static_string::set_int64( int64_t inNum )
 {
 	mString.assign(std::to_string(inNum));
 }
@@ -389,7 +476,7 @@ int64_t		forge::static_string::get_int64() const
 	return num;
 }
 
-void		forge::static_string::set( double inNum )
+void		forge::static_string::set_double( double inNum )
 {
 	mString.assign(std::to_string(inNum));
 }
@@ -405,7 +492,7 @@ double		forge::static_string::get_double() const
 	return num;
 }
 
-void		forge::static_string::set( std::string inString )
+void		forge::static_string::set_string( std::string inString )
 {
 	mString.assign(inString);
 }
@@ -422,12 +509,32 @@ void		forge::static_string::set_value_for_key( const value& inValue, const std::
 
 void		forge::static_string::get_value_for_key( value& outValue, const std::string &inKey ) const
 {
-	outValue.set("");
+	outValue.set_string("");
 }
 
 void	forge::static_string::copy_to( value &dest ) const
 {
-	dest.set(mString);
+	dest.set_string(mString);
+}
+
+
+void	forge::static_string::set_bool( bool inBool )
+{
+	set_string(std::string(inBool ? "true" : "false"));
+}
+
+
+bool	forge::static_string::get_bool() const
+{
+	if (strcasecmp("true", mString.c_str()) == 0) {
+		return true;
+	} else if (strcasecmp("false", mString.c_str()) == 0) {
+		return false;
+	} else {
+		throw std::runtime_error("Expected boolean, found a string.");
+	}
+	
+	return false;
 }
 
 
@@ -439,7 +546,7 @@ forge::static_int64::static_int64( int64_t inNum )
 	mInteger = inNum;
 }
 
-void		forge::static_int64::set( int64_t inNum )
+void		forge::static_int64::set_int64( int64_t inNum )
 {
 	mInteger = inNum;
 }
@@ -449,7 +556,7 @@ int64_t		forge::static_int64::get_int64() const
 	return mInteger;
 }
 
-void		forge::static_int64::set( double inNum )
+void		forge::static_int64::set_double( double inNum )
 {
 	if (truncf(inNum) != inNum) {
 		throw std::runtime_error("Expected integer, found a fractional number.");
@@ -462,7 +569,7 @@ double		forge::static_int64::get_double() const
 	return mInteger;
 }
 
-void		forge::static_int64::set( std::string inString )
+void		forge::static_int64::set_string( std::string inString )
 {
 	const char * str = inString.c_str();
 	char * endPtr = nullptr;
@@ -485,13 +592,30 @@ void		forge::static_int64::set_value_for_key( const value& inValue, const std::s
 
 void		forge::static_int64::get_value_for_key( value& outValue, const std::string &inKey ) const
 {
-	outValue.set("");
+	outValue.set_string("");
 }
 
 void	forge::static_int64::copy_to( value &dest ) const
 {
-	dest.set(mInteger);
+	dest.set_int64(mInteger);
 }
+
+
+void	forge::static_int64::set_bool( bool inBool )
+{
+	throw std::runtime_error("Expected integer, found a boolean.");
+}
+
+
+bool	forge::static_int64::get_bool() const
+{
+	throw std::runtime_error("Expected boolean, found an integer.");
+	
+	return false;
+}
+
+
+#pragma mark -
 
 
 forge::static_double::static_double( double inNum )
@@ -499,7 +623,7 @@ forge::static_double::static_double( double inNum )
 	mDouble = inNum;
 }
 
-void		forge::static_double::set( int64_t inNum )
+void		forge::static_double::set_int64( int64_t inNum )
 {
 	mDouble = inNum;
 }
@@ -512,7 +636,7 @@ int64_t		forge::static_double::get_int64() const
 	return mDouble;
 }
 
-void		forge::static_double::set( double inNum )
+void		forge::static_double::set_double( double inNum )
 {
 	mDouble = inNum;
 }
@@ -522,7 +646,7 @@ double		forge::static_double::get_double() const
 	return mDouble;
 }
 
-void		forge::static_double::set( std::string inString )
+void		forge::static_double::set_string( std::string inString )
 {
 	const char * str = inString.c_str();
 	char * endPtr = nullptr;
@@ -545,10 +669,245 @@ void		forge::static_double::set_value_for_key( const value& inValue, const std::
 
 void		forge::static_double::get_value_for_key( value& outValue, const std::string &inKey ) const
 {
-	outValue.set("");
+	outValue.set_string("");
 }
 
 void	forge::static_double::copy_to( value &dest ) const
 {
-	dest.set(mDouble);
+	dest.set_double(mDouble);
+}
+
+
+void	forge::static_double::set_bool( bool inBool )
+{
+	throw std::runtime_error("Expected number, found a boolean.");
+}
+
+
+bool	forge::static_double::get_bool() const
+{
+	throw std::runtime_error("Expected boolean, found a number.");
+	
+	return false;
+}
+
+
+#pragma mark -
+
+
+void		forge::static_bool::set_int64( int64_t inNum )
+{
+	throw std::runtime_error("Expected boolean, found integer.");
+}
+
+int64_t		forge::static_bool::get_int64() const
+{
+	throw std::runtime_error("Expected integer, found boolean.");
+}
+
+void		forge::static_bool::set_double( double inNum )
+{
+	throw std::runtime_error("Expected boolean, found number.");
+}
+
+double		forge::static_bool::get_double() const
+{
+	throw std::runtime_error("Expected number, found boolean.");
+}
+
+void	forge::static_bool::set_string( std::string inString )
+{
+	if (strcasecmp("true", inString.c_str()) == 0) {
+		mBool = true;
+	} else if (strcasecmp("false", inString.c_str()) == 0) {
+		mBool = false;
+	} else {
+		throw std::runtime_error("Expected boolean, found a string.");
+	}
+}
+
+std::string	forge::static_bool::get_string() const
+{
+	return (mBool ? "true" : "false");
+}
+
+void		forge::static_bool::set_value_for_key( const value& inValue, const std::string &inKey )
+{
+	throw std::runtime_error("Expected boolean, found a list.");
+}
+
+void		forge::static_bool::get_value_for_key( value& outValue, const std::string &inKey ) const
+{
+	outValue.set_string("");
+}
+
+void	forge::static_bool::copy_to( value &dest ) const
+{
+	dest.set_bool(mBool);
+}
+
+
+void	forge::static_bool::set_bool( bool inBool )
+{
+	mBool = inBool;
+}
+
+
+bool	forge::static_bool::get_bool() const
+{
+	return mBool;
+}
+
+
+#pragma mark -
+
+
+forge::variant forge::concatenate( forge::variant a, forge::variant b )
+{
+	std::string result(a.get_string());
+	result.append(b.get_string());
+	variant v;
+	v.set_string(result);
+	return v;
+}
+
+
+forge::variant forge::concatenate_space( forge::variant a, forge::variant b )
+{
+	std::string result(a.get_string());
+	result.append(" ");
+	result.append(b.get_string());
+	variant v;
+	v.set_string(result);
+	return v;
+}
+
+
+forge::variant forge::add( forge::variant a, forge::variant b )
+{
+	variant v;
+	v.set_double(a.get_double() + b.get_double());
+	return v;
+}
+
+
+forge::variant forge::subtract( forge::variant a, forge::variant b )
+{
+	variant v;
+	v.set_double(a.get_double() - b.get_double());
+	return v;
+}
+
+
+forge::variant forge::multiply( forge::variant a, forge::variant b )
+{
+	variant v;
+	v.set_double(a.get_double() * b.get_double());
+	return v;
+}
+
+
+forge::variant forge::divide( forge::variant a, forge::variant b )
+{
+	variant v;
+	v.set_double(a.get_double() / b.get_double());
+	return v;
+}
+
+
+forge::variant forge::power( forge::variant a, forge::variant b )
+{
+	variant v;
+	v.set_double(pow(a.get_double(), b.get_double()));
+	return v;
+}
+
+
+forge::variant forge::equal( forge::variant a, forge::variant b )
+{
+	variant v;
+	if (a.data_type() & value_data_type_int64 && b.data_type() & value_data_type_int64) {
+		v.set_bool(a.get_int64() == b.get_int64());
+	} else if (a.data_type() & value_data_type_double && b.data_type() & value_data_type_double) {
+		v.set_bool(a.get_double() == b.get_double());
+	} else {
+		v.set_bool( strcasecmp(a.get_string().c_str(), b.get_string().c_str()) == 0 );
+	}
+
+	return v;
+}
+
+
+forge::variant forge::not_equal( forge::variant a, forge::variant b )
+{
+	variant v;
+	if (a.data_type() & value_data_type_int64 && b.data_type() & value_data_type_int64) {
+		v.set_bool(a.get_int64() != b.get_int64());
+	} else if (a.data_type() & value_data_type_double && b.data_type() & value_data_type_double) {
+		v.set_bool(a.get_double() != b.get_double());
+	} else {
+		v.set_bool( strcasecmp(a.get_string().c_str(), b.get_string().c_str()) != 0 );
+	}
+	
+	return v;
+}
+
+
+forge::variant forge::less_than( forge::variant a, forge::variant b )
+{
+	variant v;
+	if (a.data_type() & value_data_type_int64 && b.data_type() & value_data_type_int64) {
+		v.set_bool(a.get_int64() < b.get_int64());
+	} else if (a.data_type() & value_data_type_double && b.data_type() & value_data_type_double) {
+		v.set_bool(a.get_double() < b.get_double());
+	} else {
+		v.set_bool( strcasecmp(a.get_string().c_str(), b.get_string().c_str()) < 0 );
+	}
+	
+	return v;
+}
+
+
+forge::variant forge::less_than_equal( forge::variant a, forge::variant b )
+{
+	variant v;
+	if (a.data_type() & value_data_type_int64 && b.data_type() & value_data_type_int64) {
+		v.set_bool(a.get_int64() <= b.get_int64());
+	} else if (a.data_type() & value_data_type_double && b.data_type() & value_data_type_double) {
+		v.set_bool(a.get_double() <= b.get_double());
+	} else {
+		v.set_bool( strcasecmp(a.get_string().c_str(), b.get_string().c_str()) <= 0 );
+	}
+	
+	return v;
+}
+
+
+forge::variant forge::greater_than( forge::variant a, forge::variant b )
+{
+	variant v;
+	if (a.data_type() & value_data_type_int64 && b.data_type() & value_data_type_int64) {
+		v.set_bool(a.get_int64() > b.get_int64());
+	} else if (a.data_type() & value_data_type_double && b.data_type() & value_data_type_double) {
+		v.set_bool(a.get_double() > b.get_double());
+	} else {
+		v.set_bool( strcasecmp(a.get_string().c_str(), b.get_string().c_str()) > 0 );
+	}
+	
+	return v;
+}
+
+
+forge::variant forge::greater_than_equal( forge::variant a, forge::variant b )
+{
+	variant v;
+	if (a.data_type() & value_data_type_int64 && b.data_type() & value_data_type_int64) {
+		v.set_bool(a.get_int64() >= b.get_int64());
+	} else if (a.data_type() & value_data_type_double && b.data_type() & value_data_type_double) {
+		v.set_bool(a.get_double() >= b.get_double());
+	} else {
+		v.set_bool( strcasecmp(a.get_string().c_str(), b.get_string().c_str()) >= 0 );
+	}
+	
+	return v;
 }

@@ -60,34 +60,34 @@ namespace forge {
 									X(from) \
 									X(command) \
 									X(function) \
-									X2(plus_operator, "+", 1000) \
-									X2(minus_operator, "-", 1000) \
-									X2(multiply_operator, "*", 2000) \
-									X2(divide_operator, "/", 2000) \
-									X2(dot_operator,".", 4000) \
-									X2(power_operator, "^", 3000) \
-									X2(less_than_operator, "<", 900) \
-									X2(greater_than_operator, ">", 900) \
-									X2(less_equal_operator, "<=", 900) \
-									X2(greater_equal_operator, ">=", 900) \
-									X2(not_equal_operator, "<>", 900) \
-									X2(equals_operator, "=", 900) \
-									X2(comma_operator, ",", 100) \
-									X2(open_parenthesis_operator, "(", 100 ) \
-									X2(close_parenthesis_operator, ")", 100 ) \
-									X2(ampersand_operator,"&", 600) \
-									X2(double_ampersand_operator,"&&", 600) \
-									X2(apostrophe_operator, "'", 4000) \
-									X2(at_operator, "@", 100)
+									X3(plus_operator, "+", 1000, "forge::add") \
+									X3(minus_operator, "-", 1000, "forge::subtract") \
+									X3(multiply_operator, "*", 2000, "forge::multiply") \
+									X3(divide_operator, "/", 2000, "forge::divide") \
+									X3(dot_operator,".", 4000, "forge::dot_operator") \
+									X3(power_operator, "^", 3000, "forge::power") \
+									X3(less_than_operator, "<", 900, "forge::less_than") \
+									X3(greater_than_operator, ">", 900, "forge::greater_than") \
+									X3(less_equal_operator, "<=", 900, "forge::less_than_equal") \
+									X3(greater_equal_operator, ">=", 900, "forge::greater_than_equal") \
+									X3(not_equal_operator, "<>", 900, "forge::not_equal") \
+									X3(equals_operator, "=", 900, "forge::equal") \
+									X3(comma_operator, ",", 100, "forge::comma") \
+									X3(open_parenthesis_operator, "(", 100, "forge::open_parenthesis") \
+									X3(close_parenthesis_operator, ")", 100, "forge::close_parenthesis") \
+									X3(ampersand_operator,"&", 600, "forge::concatenate") \
+									X3(double_ampersand_operator,"&&", 600, "forge::concatenate_space") \
+									X3(apostrophe_operator, "'", 4000, "forge::apostrophe") \
+									X3(at_operator, "@", 100, "forge::reference")
 
 	
 #define X(n) identifier_ ## n,
-#define X2(n,m,p) identifier_ ## n,
+#define X3(n,m,p,f) identifier_ ## n,
 	enum identifier_type {
 		IDENTIFIER_TYPES
 		identifier_INVALID
 	};
-#undef X2
+#undef X3
 #undef X
 
 	
@@ -95,7 +95,8 @@ namespace forge {
 	public:
 		bool	is_identifier( enum identifier_type inIdentifier ) const { return (mType == identifier_token || mType == operator_token) && (mIdentifierType == inIdentifier || inIdentifier == identifier_INVALID); }
 
-		int		operator_precedence() const;
+		int					operator_precedence() const;
+		static const char	*operator_function( enum identifier_type identifierType );
 
 		enum token_type			mType = whitespace_token;
 		enum identifier_type	mIdentifierType = identifier_INVALID;

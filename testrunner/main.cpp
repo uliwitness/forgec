@@ -26,7 +26,7 @@ int on_main() {
 }
 
 int main(int argc, const char * argv[]) {
-	Process::name.set((argc > 0) ? argv[0] : "");
+	Process::name.set_bool((argc > 0) ? argv[0] : "");
 	for (int x = 1; x < argc; ++x) {
 		Process::parameters.set_value_for_key(forge::static_string(argv[x]), std::to_string(x));
 	}
@@ -35,25 +35,59 @@ int main(int argc, const char * argv[]) {
 
 	forge::variant		firstParam;
 
-	firstParam.set(777LL);
+	firstParam.set_int64(777LL);
 	try { std::cout << "Integer: " << firstParam.get_int64() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
 	try { std::cout << "         " << firstParam.get_double() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
 	try { std::cout << "         " << firstParam.get_string() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
-	
-	firstParam.set(1234.5);
+	try { std::cout << "         " << firstParam.get_bool() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
+
+	firstParam.set_double(1234.5);
 	try { std::cout << "Number:  " << firstParam.get_int64() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
 	try { std::cout << "         " << firstParam.get_double() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
 	try { std::cout << "         " << firstParam.get_string() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
-	
-	firstParam.set(1234.00);
+	try { std::cout << "         " << firstParam.get_bool() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
+
+	firstParam.set_double(1234.00);
 	try { std::cout << "Number:  " << firstParam.get_int64() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
 	try { std::cout << "         " << firstParam.get_double() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
 	try { std::cout << "         " << firstParam.get_string() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
-	
-	firstParam.set("Hello you!");
+	try { std::cout << "         " << firstParam.get_bool() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
+
+	firstParam.set_string("Hello you!");
 	try { std::cout << "String:  " << firstParam.get_int64() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
 	try { std::cout << "         " << firstParam.get_double() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
 	try { std::cout << "         " << firstParam.get_string() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
+	try { std::cout << "         " << firstParam.get_bool() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
+
+	firstParam.set_bool(true);
+	try { std::cout << "Boolean: " << firstParam.get_int64() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
+	try { std::cout << "         " << firstParam.get_double() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
+	try { std::cout << "         " << firstParam.get_string() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
+	try { std::cout << "         " << firstParam.get_bool() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
+
+	firstParam.set_string("true");
+	try { std::cout << "Bool-String:" << firstParam.get_int64() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
+	try { std::cout << "         " << firstParam.get_double() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
+	try { std::cout << "         " << firstParam.get_string() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
+	try { std::cout << "         " << firstParam.get_bool() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
+
+	firstParam.set_string("false");
+	try { std::cout << "Bool-String:" << firstParam.get_int64() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
+	try { std::cout << "         " << firstParam.get_double() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
+	try { std::cout << "         " << firstParam.get_string() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
+	try { std::cout << "         " << firstParam.get_bool() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
+
+	firstParam.set_string("123.4");
+	try { std::cout << "Double-String:" << firstParam.get_int64() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
+	try { std::cout << "         " << firstParam.get_double() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
+	try { std::cout << "         " << firstParam.get_string() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
+	try { std::cout << "         " << firstParam.get_bool() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
+
+	firstParam.set_string("777");
+	try { std::cout << "Int-String:" << firstParam.get_int64() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
+	try { std::cout << "         " << firstParam.get_double() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
+	try { std::cout << "         " << firstParam.get_string() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
+	try { std::cout << "         " << firstParam.get_bool() << std::endl; } catch(std::exception& err) { std::cerr << err.what() << std::endl; }
 
 	firstParam.set_value_for_key(forge::static_string("list\n\nitem"), "1");
 	forge::static_string	returnedString;

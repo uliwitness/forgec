@@ -2,6 +2,7 @@
 
 import command doSomething( int64 foo, string bar ) as this is <bar> that is another <foo>
 import function currentProcess() as the process
+import function Button() as the mouse
 
 on startUp foo, @bar, baz
 	put 4+5* 7 -16
@@ -11,7 +12,7 @@ on startUp foo, @bar, baz
 	repeat with x = 1 to 50
 		put "Hello" & 4 * 5 & "World" into myVar
 	end repeat
-	repeat while mouse is not down
+	repeat while the mouse is not down
 		put "Click!"
 	end repeat
 	this is "Greenroot" that is another 50

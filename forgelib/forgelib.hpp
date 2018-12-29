@@ -28,6 +28,7 @@ namespace forge {
 		value_data_type_double = (1 << 1),
 		value_data_type_string = (1 << 2),
 		value_data_type_map = (1 << 3),
+		value_data_type_bool = (1 << 4),
 	};
 	typedef uint32_t value_data_type;
 	
@@ -35,14 +36,17 @@ namespace forge {
 	//	without having to know what type they are.
 	class value {
 	public:
-		virtual void		set( int64_t inNum ) = 0;
+		virtual void		set_int64( int64_t inNum ) = 0;
 		virtual int64_t		get_int64() const = 0;
 		
-		virtual void		set( double inNum ) = 0;
+		virtual void		set_double( double inNum ) = 0;
 		virtual double		get_double() const = 0;
 		
-		virtual void		set( std::string inString ) = 0;
+		virtual void		set_string( std::string inString ) = 0;
 		virtual std::string	get_string() const = 0;
+
+		virtual void		set_bool( bool inBool ) = 0;
+		virtual bool		get_bool() const = 0;
 
 		virtual void		set_value_for_key( const value& inValue, const std::string &inKey ) = 0;
 		virtual void		get_value_for_key( value& outValue, const std::string &inKey ) const = 0;
@@ -66,14 +70,17 @@ namespace forge {
 	//	Do not use! Use variant instead!
 	class variant_base : public value {
 	public:
-		virtual void		set( int64_t inNum );
+		virtual void		set_int64( int64_t inNum );
 		virtual int64_t		get_int64() const;
 
-		virtual void		set( double inNum );
+		virtual void		set_double( double inNum );
 		virtual double		get_double() const;
 
-		virtual void		set( std::string inString );
+		virtual void		set_string( std::string inString );
 		virtual std::string	get_string() const;
+
+		virtual void		set_bool( bool inBool );
+		virtual bool		get_bool() const;
 
 		virtual void		set_value_for_key( const value& inValue, const std::string &inKey );
 		virtual void		get_value_for_key( value& outValue, const std::string &inKey ) const;
@@ -86,115 +93,10 @@ namespace forge {
 			double							mDouble;
 			std::string						*mString;
 			std::map<std::string, variant>	*mMap;
+			bool							mBool;
 		} mValue;
 	};
 	
-
-	// Internal base class used by 'variant' to store integer values:
-	//	Do not use! Use variant instead!
-	class variant_int64 : public variant_base {
-	public:
-		virtual void		set( int64_t inNum );
-		virtual int64_t		get_int64() const;
-		
-		virtual double		get_double() const;
-		
-		virtual std::string	get_string() const;
-
-		virtual void		get_value_for_key( value& outValue, const std::string &inKey ) const;
-		
-		virtual void		copy_to( value &dest ) const;
-		
-		virtual value_data_type	data_type() const { return value_data_type_int64; }
-
-	protected:
-		variant_int64( int64_t inNum ) : variant_base() { mValue.mInteger = inNum; }
-		
-		friend class variant_base;
-	};
-	static_assert(sizeof(variant_int64) == sizeof(variant_base), "subclasses of variant_base must be the same size.");
-
-	// Internal base class used by 'variant' to store floating point values:
-	//	Do not use! Use variant instead!
-	class variant_double : public variant_base {
-	public:
-		virtual int64_t		get_int64() const;
-		
-		virtual void		set( double inNum );
-		virtual double		get_double() const;
-		
-		virtual std::string	get_string() const;
-
-		virtual void		get_value_for_key( value& outValue, const std::string &inKey ) const;
-		
-		virtual void		copy_to( value &dest ) const;
-		
-		virtual value_data_type	data_type() const { return (trunc(mValue.mDouble) != mValue.mDouble) ? value_data_type_double : value_data_type_int64; }
-
-	protected:
-		variant_double( double inNum ) : variant_base() { mValue.mDouble = inNum; }
-
-		friend class variant_base;
-	};
-	static_assert(sizeof(variant_double) == sizeof(variant_base), "subclasses of variant_base must be the same size.");
-
-
-	// Internal base class used by 'variant' to store string values:
-	//	Do not use! Use variant instead!
-	class variant_string : public variant_base {
-	public:
-		variant_string( const variant_string& inOriginal );
-
-		virtual int64_t		get_int64() const;
-		
-		virtual double		get_double() const;
-		
-		virtual void		set( std::string inString );
-		virtual std::string	get_string() const;
-
-		virtual void		get_value_for_key( value& outValue, const std::string &inKey ) const;
-		
-		virtual void		copy_to( value &dest ) const;
-		
-		virtual value_data_type	data_type() const { return value_data_type_string; }
-
-	protected:
-		variant_string( std::string inStr );
-		~variant_string();
-
-		friend class variant_base;
-	};
-	static_assert(sizeof(variant_string) == sizeof(variant_base), "subclasses of variant_base must be the same size.");
-
-	
-	// Internal base class used by 'variant' to store dictionary values:
-	//	Do not use! Use variant instead!
-	class variant_map : public variant_base {
-	public:
-		variant_map( const variant_map& inOriginal );
-		
-		virtual int64_t		get_int64() const;
-		
-		virtual double		get_double() const;
-		
-		virtual std::string	get_string() const;
-		
-		virtual void		set_value_for_key( const value& inValue, const std::string &inKey );
-		virtual void		get_value_for_key( value& outValue, const std::string &inKey ) const;
-		
-		virtual void		copy_to( value &dest ) const;
-		
-		virtual value_data_type	data_type() const { return value_data_type_map; }
-
-	protected:
-		variant_map();
-		variant_map( const value& inValue, const std::string& inKey );
-		~variant_map();
-		
-		friend class variant_base;
-	};
-	static_assert(sizeof(variant_int64) == sizeof(variant_base), "subclasses of variant_base must be the same size.");
-
 	
 	// Class used for variables. A variable may change its type depending on
 	//	what value you assign to it. To achieve this, we employ a mean hack:
@@ -206,15 +108,18 @@ namespace forge {
 		variant() 											{ new (mValue) variant_base(); }
 		~variant()											{ val()->~variant_base();  }
 		
-		virtual void		set( int64_t inNum ) 			{ val()->set(inNum); }
+		virtual void		set_int64( int64_t inNum ) 		{ val()->set_int64(inNum); }
 		virtual int64_t		get_int64() const				{ return val().get_int64(); }
 		
-		virtual void		set( double inNum )	 			{ val()->set(inNum); }
+		virtual void		set_double( double inNum )	 	{ val()->set_double(inNum); }
 		virtual double		get_double() const				{ return val().get_double(); }
 		
-		virtual void		set( std::string inString ) 	{ val()->set(inString); }
-		virtual std::string	get_string() const				{ return val().get_string(); }
-
+		virtual void		set_string( std::string inString ) 	{ val()->set_string(inString); }
+		virtual std::string	get_string() const					{ return val().get_string(); }
+		
+		virtual void		set_bool( bool inBool ) 			{ val()->set_bool(inBool); }
+		virtual bool		get_bool() const					{ return val().get_bool(); }
+		
 		virtual void		set_value_for_key( const value& inValue, const std::string &inKey )	{ val()->set_value_for_key(inValue, inKey); }
 		virtual void		get_value_for_key( value& outValue, const std::string &inKey ) const{ val().get_value_for_key( outValue, inKey ); }
 		
@@ -234,17 +139,20 @@ namespace forge {
 	//	as any other type as long as the string can be converted to that:
 	class static_string : public stack_suitable_value {
 	public:
-		static_string( std::string inStr = std::string() );
+		explicit static_string( std::string inStr = std::string() );
 		virtual ~static_string() {}
 
-		virtual void		set( int64_t inNum );
+		virtual void		set_int64( int64_t inNum );
 		virtual int64_t		get_int64() const;
 		
-		virtual void		set( double inNum );
+		virtual void		set_double( double inNum );
 		virtual double		get_double() const;
 		
-		virtual void		set( std::string inString );
+		virtual void		set_string( std::string inString );
 		virtual std::string	get_string() const;
+
+		virtual bool		get_bool() const;
+		virtual void		set_bool( bool inBool );
 
 		virtual void		set_value_for_key( const value& inValue, const std::string &inKey );
 		virtual void		get_value_for_key( value& outValue, const std::string &inKey ) const;
@@ -261,17 +169,20 @@ namespace forge {
 	//	as any other type as long as the string can be converted to that:
 	class static_int64 : public stack_suitable_value {
 	public:
-		static_int64( int64_t inNum = 0LL );
+		explicit static_int64( int64_t inNum = 0LL );
 		virtual ~static_int64() {}
 
-		virtual void		set( int64_t inNum );
+		virtual void		set_int64( int64_t inNum );
 		virtual int64_t		get_int64() const;
 		
-		virtual void		set( double inNum );
+		virtual void		set_double( double inNum );
 		virtual double		get_double() const;
 		
-		virtual void		set( std::string inString );
+		virtual void		set_string( std::string inString );
 		virtual std::string	get_string() const;
+
+		virtual bool		get_bool() const;
+		virtual void		set_bool( bool inBool );
 
 		virtual void		set_value_for_key( const value& inValue, const std::string &inKey );
 		virtual void		get_value_for_key( value& outValue, const std::string &inKey ) const;
@@ -289,17 +200,20 @@ namespace forge {
 	//	converted to that:
 	class static_double : public stack_suitable_value {
 	public:
-		static_double( double inDouble = 0.0 );
+		explicit static_double( double inDouble = 0.0 );
 		virtual ~static_double() {}
 
-		virtual void		set( int64_t inNum );
+		virtual void		set_int64( int64_t inNum );
 		virtual int64_t		get_int64() const;
 		
-		virtual void		set( double inNum );
+		virtual void		set_double( double inNum );
 		virtual double		get_double() const;
 		
-		virtual void		set( std::string inString );
+		virtual void		set_string( std::string inString );
 		virtual std::string	get_string() const;
+
+		virtual bool		get_bool() const;
+		virtual void		set_bool( bool inBool );
 
 		virtual void		set_value_for_key( const value& inValue, const std::string &inKey );
 		virtual void		get_value_for_key( value& outValue, const std::string &inKey ) const;
@@ -324,7 +238,10 @@ namespace forge {
 		virtual double		get_double() const;
 		
 		virtual std::string	get_string() const;
-		
+
+		virtual bool		get_bool() const;
+		virtual void		set_bool( bool inBool );
+
 		virtual void		set_value_for_key( const value& inValue, const std::string &inKey );
 		virtual void		get_value_for_key( value& outValue, const std::string &inKey ) const;
 		
@@ -335,6 +252,49 @@ namespace forge {
 	public:
 		std::map<std::string,variant>	mMap;
 	};
+
+	class static_bool : public stack_suitable_value {
+	public:
+		static_bool() : mBool(false) {}
+		static_bool( const static_bool& inOriginal ) { mBool = inOriginal.mBool; }
+		explicit static_bool( bool inBool )	{ mBool = inBool; }
+		
+		virtual int64_t		get_int64() const;
+		virtual void		set_int64( int64_t inNum );
+
+		virtual double		get_double() const;
+		virtual void		set_double( double inNum );
+
+		virtual std::string	get_string() const;
+		virtual void		set_string( std::string inStr );
+
+		virtual bool		get_bool() const;
+		virtual void		set_bool( bool inBool );
+
+		virtual void		set_value_for_key( const value& inValue, const std::string &inKey );
+		virtual void		get_value_for_key( value& outValue, const std::string &inKey ) const;
+
+		virtual void		copy_to( value &dest ) const;
+		
+		virtual value_data_type	data_type() const { return value_data_type_bool; }
+		
+	public:
+		bool mBool;
+	};
+
+	variant concatenate( variant a, variant b );
+	variant concatenate_space( variant a, variant b );
+	variant add( variant a, variant b );
+	variant subtract( variant a, variant b );
+	variant multiply( variant a, variant b );
+	variant divide( variant a, variant b );
+	variant power( variant a, variant b );
+	variant equal( forge::variant a, forge::variant b );
+	variant not_equal( forge::variant a, forge::variant b );
+	variant less_than( forge::variant a, forge::variant b );
+	variant less_than_equal( forge::variant a, forge::variant b );
+	variant greater_than( forge::variant a, forge::variant b );
+	variant greater_than_equal( forge::variant a, forge::variant b );
 }
 
 #pragma GCC visibility pop

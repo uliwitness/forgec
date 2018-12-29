@@ -7,7 +7,7 @@ import function bool Button() as the mouse
 on startUp foo, @bar, baz
 	put 4+5* 7 -16
 	put 1, "hello", 123.45
-	put the process into myVar
+	put the name of the process into myVar
 	put myFunc("This could be really useful!", 77) && 4+5* 7 -16 ^ 2.5 . 1.1.1
 	repeat with x = 1 to 50
 		put "Hello" & 4 * 5 & "World" into myVar

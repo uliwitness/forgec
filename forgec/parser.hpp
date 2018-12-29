@@ -226,7 +226,7 @@ namespace forge {
 		
 		const token			*expect_token_type( token_type inType, skip_type inSkip = skip_type::skip );
 		bool				expect_identifier( identifier_type inType, skip_type inSkip = skip_type::skip );
-		const std::string	*expect_unquoted_string( const std::string inStr = std::string() );
+		const std::string	*expect_unquoted_string( const std::string inStr = std::string(), skip_type inSkip = skip_type::skip );
 		const std::string	*expect_unquoted_string_or_operator( const std::string inStr = std::string() );
 		const std::string	*expect_string();
 

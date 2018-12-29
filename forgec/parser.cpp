@@ -223,6 +223,24 @@ forge::stack_suitable_value	*forge::parser::parse_one_value()
 		return theValue;
 	} else {
 		std::vector<token>::const_iterator savedStartToken = mCurrToken;
+		if (expect_identifier(identifier_the) || expect_unquoted_string("", peek)) { // Eat a "the" or just scan ahead if it's an identifier.
+			const std::string *propertyName = expect_unquoted_string();
+			if (propertyName) {
+				if (expect_identifier(identifier_of)) {
+					stack_suitable_value *targetValue = parse_one_value();
+					handler_call *theValue = mScript->take_ownership_of(new handler_call);
+					theValue->mName = ".";
+					theValue->mParameters.push_back(targetValue);
+					static_string	*propNameValue = mScript->take_ownership_of(new static_string);
+					propNameValue->set_string(*propertyName);
+					theValue->mParameters.push_back(propNameValue);
+					return theValue;
+				}
+			}
+		}
+		
+		mCurrToken = savedStartToken;
+		
 		if (const std::string *handlername = expect_unquoted_string()) {
 			if (expect_identifier(identifier_open_parenthesis_operator)) {
 				handler_call	*newCall = mScript->take_ownership_of(new handler_call);
@@ -524,12 +542,14 @@ const std::string	*forge::parser::expect_string()
 }
 
 
-const std::string	*forge::parser::expect_unquoted_string( const std::string inStr )
+const std::string	*forge::parser::expect_unquoted_string( const std::string inStr, skip_type inSkip )
 {
 	if (mCurrToken != mTokens->end() && mCurrToken->mType == identifier_token
 		&& (inStr.length() == 0 || inStr.compare(mCurrToken->mText) == 0)) {
 		const std::string *str = &mCurrToken->mText;
-		++mCurrToken;
+		if (inSkip == skip) {
+			++mCurrToken;
+		}
 		return str;
 	}
 	

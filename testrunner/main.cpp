@@ -17,12 +17,9 @@ int on_main() {
 }
 
 int main(int argc, const char * argv[]) {
-	Process::currentProcess().name.set_string((argc > 0) ? argv[0] : "");
-	for (int x = 1; x < argc; ++x) {
-		Process::parameters.set_value_for_key(forge::static_string(argv[x]), std::to_string(x));
-	}
-	std::cout << Process::currentProcess().name.get_string() << std::endl;
-	std::cout << Process::currentProcess().parameters.get_string() << std::endl;
+	forge::Process::currentProcess().set_args(argc, argv);
+	std::cout << forge::Process::currentProcess().name.get_string() << std::endl;
+	std::cout << forge::Process::currentProcess().parameters.get_string() << std::endl;
 
 	forge::variant		firstParam;
 

@@ -283,6 +283,21 @@ namespace forge {
 		bool mBool;
 	};
 
+	class Process {
+		public:
+		forge::variant 			parameters;
+		forge::static_string	name;
+		
+		static Process& currentProcess() { static Process currentProcess; return currentProcess; }
+		
+		void set_args( int argc, const char *argv[] ) {
+			name.set_string((argc > 0) ? argv[0] : "");
+			for (int x = 1; x < argc; ++x) {
+				parameters.set_value_for_key(forge::static_string(argv[x]), std::to_string(x));
+			}
+		}
+	};
+
 	variant concatenate( variant a, variant b );
 	variant concatenate_space( variant a, variant b );
 	variant add( variant a, variant b );

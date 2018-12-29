@@ -897,11 +897,7 @@ void	forge::codegen::start_encoding_script( const forge::script &inScript )
 	mCode << std::endl;
 
 	mCode << "int main(int argc, const char * argv[]) {" << std::endl
-	<< "\tProcess::currentProcess().name.set_string((argc > 0) ? argv[0] : \"\");" << std::endl
-	<< "\tfor (int x = 1; x < argc; ++x) {" << std::endl
-	<< "\t\tProcess::parameters.set_value_for_key(forge::static_string(argv[x]), std::to_string(x));" << std::endl
-	<< "\t}" << std::endl
-	<< std::endl
+	<< "\tforge::Process::currentProcess().set_args(argc, argv);" << std::endl
 	<< "\tcmd_startUp();" << std::endl
 	<< "}" << std::endl << std::endl;
 }

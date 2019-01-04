@@ -37,6 +37,7 @@ class variant_int64 : public variant_base {
 	variant_int64( int64_t inNum ) : variant_base() { mValue.mInteger = inNum; }
 	
 	friend class variant_base;
+	friend class variant;
 };
 static_assert(sizeof(variant_int64) == sizeof(variant_base), "subclasses of variant_base must be the same size.");
 
@@ -63,6 +64,7 @@ class variant_double : public variant_base {
 	variant_double( double inNum ) : variant_base() { mValue.mDouble = inNum; }
 	
 	friend class variant_base;
+	friend class variant;
 };
 static_assert(sizeof(variant_double) == sizeof(variant_base), "subclasses of variant_base must be the same size.");
 
@@ -95,6 +97,7 @@ class variant_string : public variant_base {
 	~variant_string();
 	
 	friend class variant_base;
+	friend class variant;
 };
 static_assert(sizeof(variant_string) == sizeof(variant_base), "subclasses of variant_base must be the same size.");
 
@@ -126,6 +129,7 @@ class variant_map : public variant_base {
 	~variant_map();
 	
 	friend class variant_base;
+	friend class variant;
 };
 static_assert(sizeof(variant_int64) == sizeof(variant_base), "subclasses of variant_base must be the same size.");
 
@@ -155,6 +159,7 @@ protected:
 	variant_bool( bool inBool ) { mValue.mBool = inBool; }
 	
 	friend class variant_base;
+	friend class variant;
 };
 static_assert(sizeof(variant_bool) == sizeof(variant_base), "subclasses of variant_base must be the same size.");
 }

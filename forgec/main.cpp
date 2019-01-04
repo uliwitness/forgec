@@ -43,7 +43,15 @@ int main(int argc, const char * argv[]) {
 		
 		codegen	codeGen;
 		s.generate_code(codeGen);
-		codeGen.print( std::cout );
+		
+		std::string path(argv[1]);
+		size_t suffixPos = path.find_last_of(".");
+		if (suffixPos != std::string::npos) {
+			path = path.substr(0, suffixPos);
+		}
+		path.append(".cpp");
+		std::ofstream	outputFile(path);
+		codeGen.print( outputFile );
 	} catch( forge::parse_error& err ) {
 		std::cerr << err.what() << std::endl;
 	} catch( std::exception& err ) {

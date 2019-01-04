@@ -482,6 +482,25 @@ void	forge::variant_map::copy_to( value &dest ) const
 #pragma mark -
 
 
+forge::variant::variant( const char *inStr )
+{
+	new (mValue) variant_string(inStr);
+}
+
+forge::variant::variant( int64_t inNum )
+{
+	new (mValue) variant_int64(inNum);
+}
+
+forge::variant::variant( double inNum )
+{
+	new (mValue) variant_double(inNum);
+}
+
+
+#pragma mark -
+
+
 forge::static_string::static_string( std::string inStr )
 {
 	mString = inStr;

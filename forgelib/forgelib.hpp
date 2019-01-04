@@ -11,6 +11,7 @@
 
 #include <string>
 #include <map>
+#include <vector>
 #include <cstdint>
 #include <cmath>
 
@@ -107,7 +108,10 @@ namespace forge {
 	//	to actually allocate the appropriat subclass inside that.
 	class variant : public stack_suitable_value {
 	public:
-		variant( const variant &inOriginal ) 				{ new (mValue) variant_base(); inOriginal.val().copy_to(*val()); }
+		variant( const value &inOriginal ) 					{ new (mValue) variant_base(); inOriginal.copy_to(*val()); }
+		explicit variant( const char *inStr );
+		explicit variant( int64_t inNum );
+		explicit variant( double inNum );
 		variant() 											{ new (mValue) variant_base(); }
 		~variant()											{ val()->~variant_base();  }
 		
@@ -289,15 +293,15 @@ namespace forge {
 
 	class Process {
 		public:
-		forge::variant 			parameters;
-		forge::static_string	name;
+		std::vector<forge::variant>		parameters;
+		forge::static_string			name;
 		
 		static Process& currentProcess() { static Process currentProcess; return currentProcess; }
 		
 		void set_args( int argc, const char *argv[] ) {
 			name.set_string((argc > 0) ? argv[0] : "");
 			for (int x = 1; x < argc; ++x) {
-				parameters.set_value_for_key(forge::static_string(argv[x]), std::to_string(x));
+				parameters.push_back(forge::variant(argv[x]));
 			}
 		}
 	};

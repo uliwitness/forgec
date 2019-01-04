@@ -22,6 +22,12 @@ namespace forge {
 		peek
 	};
 	
+	class c_type {
+	public:
+		std::string	mCName;
+		forge::value_data_type mType;
+	};
+	
 	class parse_error : public std::exception {
 	public:
 		parse_error( const std::string &str, const std::string& fileName, size_t offsetInFile, size_t lineNumber, size_t offsetInLine ) : mMessage(str), mFileName(fileName), mOffsetInFile(offsetInFile), mLineNumber(lineNumber), mOffsetInLine(offsetInLine) {}
@@ -169,6 +175,7 @@ namespace forge {
 	class handler_definition {
 	public:
 		std::string								mName;
+		std::string								mCName;
 		std::vector<parameter_declaration>		mParameters;
 		std::vector<handler_call *>				mCommands;
 		std::map<std::string,variable_entry>	mVariables;
@@ -242,6 +249,9 @@ namespace forge {
 		
 		void	print( std::ostream& dest );
 		
+		std::string		first_handler_name()	{ return mFirstHandlerName; }
+		identifier_type	first_handler_type()	{ return mFirstHandlerType; }
+		
 	protected:
 		void	skip_empty_lines();
 		void	skip_rest_of_line();
@@ -271,6 +281,8 @@ namespace forge {
 		handler_definition					*mCurrHandler = nullptr;
 		std::vector<syntax_command>			mCommands;
 		std::vector<syntax_command>			mFunctions;
+		std::string							mFirstHandlerName;
+		identifier_type						mFirstHandlerType = identifier_INVALID; // identifier_function or identifier_on at the moment.
 	};
 	
 	void generate_code( stack_suitable_value *inValue, forge::codegen& inCodegen );

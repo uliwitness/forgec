@@ -116,6 +116,8 @@ void	forge::parser::parse_parameter_declaration( std::vector<parameter_declarati
 			break;
 		}
 	}
+	
+	skip_empty_lines(); // Ensure we *always* skip trailing newlines, whether we have params or not, otherwise empty handlers with no params parse their "end" line as a handler call.
 }
 
 
@@ -442,6 +444,14 @@ void	forge::parser::parse_one_line( std::vector<handler_call *> &outCommands )
 		}
 		
 		outCommands.push_back(newCall);
+	} else if (expect_identifier(identifier_end)) {
+		if (const std::string *handlerName = expect_unquoted_string()) {
+			std::stringstream msg;
+			msg << "Unbalanced \"end " << *handlerName << "\" found.";
+			throw_parse_error(msg.str().c_str());
+		} else {
+			throw_parse_error("Unbalanced \"end\" found.");
+		}
 	} else {
 		handler_call *newCall = try_to_parse_command( mCommands );
 		if (newCall) {
@@ -479,8 +489,9 @@ void	forge::parser::parse_one_line( std::vector<handler_call *> &outCommands )
 void	forge::parser::parse_handler( identifier_type inType, handler_definition &outHandler )
 {
 	if (const std::string *handlerName = expect_unquoted_string()) {
+		outHandler.mCName = *handlerName;
+		outHandler.mCName.insert(0, (inType == identifier_on) ? "cmd_" : "fun_");
 		outHandler.mName = *handlerName;
-		outHandler.mName.insert(0, (inType == identifier_on) ? "cmd_" : "fun_");
 		parse_parameter_declaration(outHandler.mParameters);
 		
 		for (auto &currParameter : outHandler.mParameters) {
@@ -493,8 +504,11 @@ void	forge::parser::parse_handler( identifier_type inType, handler_definition &o
 
 		while (mCurrToken != mTokens->end()) {
 			auto saveToken = mCurrToken;
-			if (expect_identifier(identifier_end) && expect_unquoted_string(*handlerName)) {
-				break;
+			if (expect_identifier(identifier_end) ) {
+				if (expect_unquoted_string(*handlerName)) {
+					break;
+				}
+				mCurrToken = saveToken;
 			} else {
 				mCurrToken = saveToken;
 			}
@@ -697,6 +711,20 @@ void	forge::parser::parse( std::vector<token>& inTokens, script &outScript )
 			parse_handler(identifier_on, theHandler);
 			mCurrHandler = nullptr;
 			outScript.mHandlers.push_back(theHandler);
+			if (mFirstHandlerName.length() == 0) {
+				mFirstHandlerName = theHandler.mName;
+				mFirstHandlerType = identifier_on;
+			}
+		} else if (expect_identifier(identifier_function)) {
+			handler_definition	theHandler;
+			mCurrHandler = &theHandler;
+			parse_handler(identifier_function, theHandler);
+			mCurrHandler = nullptr;
+			outScript.mHandlers.push_back(theHandler);
+			if (mFirstHandlerName.length() == 0) {
+				mFirstHandlerName = theHandler.mName;
+				mFirstHandlerType = identifier_function;
+			}
 		} else if (expect_identifier(identifier_import)) {
 			parse_import_statement();
 		}
@@ -889,46 +917,33 @@ std::string	forge::loop_call::get_string() const
 
 void	forge::codegen::start_encoding_script( const forge::script &inScript )
 {
-	mCode << "#include \"forgelib.hpp\"" << std::endl << std::endl;
+	mCode << "#include \"forgelib.hpp\"" << std::endl
+		<< "#include <vector>" << std::endl << std::endl;
 	
 	for (auto &currHandler : inScript.mHandlers) {
-		mCode << "forge::variant " << currHandler.mName << "(";
-		bool isFirst = true;
-		for (auto &currParam : currHandler.mParameters) {
-			if (isFirst) {
-				isFirst = false;
-			} else {
-				mCode << ", ";
-			}
-			mCode << "forge::variant var_"; // TODO: Look up type in mVariables and narrow it down as necessary.
-			mCode << currParam.mName;
-		}
-		mCode << ");" << std::endl;
+		mCode << "forge::variant " << currHandler.mCName << "(std::vector<forge::variant> params);" << std::endl;
 	}
 	mCode << std::endl;
 
 	mCode << "int main(int argc, const char * argv[]) {" << std::endl
 	<< "\tforge::Process::currentProcess().set_args(argc, argv);" << std::endl
-	<< "\tcmd_startUp();" << std::endl
+	<< "\tcmd_startUp(forge::Process::currentProcess().parameters);" << std::endl
+	<< "\treturn 0;" << std::endl
 	<< "}" << std::endl << std::endl;
 }
 
 
 void	forge::codegen::start_encoding_handler( const forge::handler_definition &inHandler )
 {
-	mCode << "forge::variant " << inHandler.mName << "(";
-	bool isFirst = true;
+	mCode << "forge::variant " << inHandler.mCName << "(std::vector<forge::variant> params) {" << std::endl;
+
+	size_t paramNum = 0;
 	for (auto &currParam : inHandler.mParameters) {
-		if (isFirst) {
-			isFirst = false;
-		} else {
-			mCode << ", ";
-		}
-		mCode << "forge::variant var_"; // TODO: Look up type in mVariables and narrow it down as necessary.
-		mCode << currParam.mName;
+		mCode << "\tforge::variant var_"; // TODO: Look up type in mVariables and narrow it down as necessary.
+		mCode << currParam.mName << "(params[" << paramNum << "]);" << std::endl;
+		++paramNum;
 	}
-	mCode << ") {" << std::endl;
-	
+
 	for (auto &currVariable : inHandler.mVariables) {
 		if (currVariable.second.mIsParameter) {
 			continue;
@@ -945,6 +960,7 @@ void	forge::codegen::start_encoding_handler( const forge::handler_definition &in
 
 void	forge::codegen::end_encoding_handler( const forge::handler_definition &inHandler )
 {
+	mCode << "\treturn forge::variant();" << std::endl;
 	mCode << "}" << std::endl << std::endl;
 }
 
@@ -995,7 +1011,17 @@ void	forge::codegen::end_encoding_script( const forge::script &inScript )
 
 void	forge::codegen::encode_value( stack_suitable_value* inValue )
 {
-	mCode << inValue->get_string();
+	if (inValue->data_type() & value_data_type_int64) {
+		mCode << "forge::static_int64(" << inValue->get_string() << ")";
+	} else if (inValue->data_type() & value_data_type_double) {
+		mCode << "forge::static_double(" << inValue->get_string() << ")";
+	} else if (inValue->data_type() & value_data_type_bool) {
+		mCode << "forge::static_bool(" << inValue->get_string() << ")";
+	} else if (inValue->data_type() & value_data_type_string) {
+		mCode << "forge::static_string(\"" << inValue->get_string() << "\")";
+	} else {
+		mCode << inValue->get_string();
+	}
 }
 
 

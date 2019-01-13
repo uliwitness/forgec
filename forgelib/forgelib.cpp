@@ -984,6 +984,12 @@ forge::variant forge::greater_than_equal( forge::variant a, forge::variant b )
 }
 
 
+void forge::assign_to( forge::variant a, forge::variant &b )
+{
+	a.copy_to(b);
+}
+
+
 void forge::append_to( forge::variant a, forge::variant &b )
 {
 	b.append(a);
@@ -993,4 +999,14 @@ void forge::append_to( forge::variant a, forge::variant &b )
 void forge::prefix_to( forge::variant a, forge::variant &b )
 {
 	b.prepend(a);
+}
+
+
+forge::variant forge::cmd_put( std::vector<forge::variant> params )
+{
+	if (params.size() > 0) {
+		std::cout << params[0].get_string() << std::endl;
+	}
+	
+	return forge::variant();
 }

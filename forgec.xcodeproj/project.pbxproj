@@ -277,6 +277,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 55D7E40F21DFB5EE00144110 /* Build configuration list for PBXNativeTarget "producttest" */;
 			buildPhases = (
+				55D7E41821DFDE2100144110 /* ShellScript */,
 				55D7E40521DFB5EE00144110 /* Sources */,
 				55D7E40621DFB5EE00144110 /* Frameworks */,
 				55D7E40721DFB5EE00144110 /* CopyFiles */,
@@ -334,6 +335,28 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		55D7E41821DFDE2100144110 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/forgec/test1.frc",
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(BUILT_PRODUCTS_DIR)/test1.cpp",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "\"${BUILT_PRODUCTS_DIR}/forgec\" \"${SRCROOT}/forgec/test1.frc\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		5535628A21C0475700FE681E /* Sources */ = {

@@ -40,12 +40,12 @@ forge::value_data_type	forge::syntax_c_parameter::value_data_type( std::string i
 
 forge::value_data_type	forge::syntax_c_parameter::value_data_type() const
 {
-	return syntax_c_parameter::value_data_type(mType);
+	return mType.mType;
 }
 
 std::string forge::syntax_label::flags_string()
 {
-	return syntax_label::flags_string( mType );
+	return syntax_label::flags_string( mType.mType );
 }
 
 
@@ -233,8 +233,8 @@ forge::stack_suitable_value	*forge::parser::parse_one_value()
 			if (propertyName) {
 				if (expect_identifier(identifier_of)) {
 					stack_suitable_value *targetValue = parse_one_value();
-					handler_call *theValue = mScript->take_ownership_of(new handler_call);
-					theValue->mName = ".";
+					handler_call *theValue = mScript->take_ownership_of(new operator_call);
+					theValue->mName = "forge::dot_operator";
 					theValue->mParameters.push_back(targetValue);
 					static_string	*propNameValue = mScript->take_ownership_of(new static_string);
 					propNameValue->set_string(*propertyName);
@@ -317,15 +317,16 @@ forge::handler_call *forge::parser::try_to_parse_command( const std::vector<synt
 			} else {
 				foundCommand = true;
 				if (!newCall) {
-					newCall = mScript->take_ownership_of(new handler_call);
+					newCall = mScript->take_ownership_of(new operator_call);
 					newCall->mName = currCmd.mCName;
 					newCall->mParameters.resize(currCmd.mCParameters.size(), nullptr);
 				}
-				if (currLabel.mType != value_data_type_NONE) {
+				if (currLabel.mType.mType != value_data_type_NONE) {
 					forge::stack_suitable_value	*param = parse_one_value();
 					syntax_c_parameter &cParameter = currCmd.mCParameters[currLabel.mCParameterName];
 					size_t paramIndex = cParameter.mParameterIndex;
 					newCall->mParameters[paramIndex] = param;
+					newCall->mVariantParameters.insert(paramIndex);
 				}
 			}
 		}
@@ -344,18 +345,26 @@ void	forge::parser::parse_one_line( std::vector<handler_call *> &outCommands )
 	skip_empty_lines();
 	
 	if (expect_identifier(identifier_put)) {
-		handler_call	*newCall = mScript->take_ownership_of(new handler_call);
-		newCall->mParameters.push_back(parse_expression());
+		handler_call	*newCall = nullptr;
+		forge::stack_suitable_value	*expr = parse_expression();
 		if(expect_identifier(identifier_into)) {
+			newCall = mScript->take_ownership_of(new operator_call);
+			newCall->mParameters.push_back(expr);
 			newCall->mParameters.push_back(parse_expression());
 			newCall->mName = "forge::assign_to";
 		} else if(expect_identifier(identifier_before)) {
+			newCall = mScript->take_ownership_of(new operator_call);
+			newCall->mParameters.push_back(expr);
 			newCall->mParameters.push_back(parse_expression());
 			newCall->mName = "forge::prefix_to";
 		} else if(expect_identifier(identifier_after)) {
+			newCall = mScript->take_ownership_of(new operator_call);
+			newCall->mParameters.push_back(expr);
 			newCall->mParameters.push_back(parse_expression());
 			newCall->mName = "forge::append_to";
 		} else {
+			newCall = mScript->take_ownership_of(new handler_call);
+			newCall->mParameters.push_back(expr);
 			newCall->mName = "cmd_put";
 
 			if (expect_identifier(identifier_comma_operator)) {
@@ -635,7 +644,7 @@ void	forge::parser::parse_import_statement()
 	}
 	
 	size_t	parameterIndex = 0;
-	
+ 
 	while (!expect_token_type(newline_token, peek) && !expect_identifier(identifier_close_parenthesis_operator, peek)) {
 		const std::string *paramType = expect_unquoted_string();
 		if (!paramType) {
@@ -646,7 +655,14 @@ void	forge::parser::parse_import_statement()
 			throw_parse_error("Expected parameter name here.");
 		}
 		
-		cmd.mCParameters[*paramName] = syntax_c_parameter{ .mName = *paramName, .mType = *paramType, .mParameterIndex = parameterIndex };
+		std::string actualType = *paramType;
+		bool isVariant = false;
+		const char *typePrefix = "forge::variant::";
+		if (paramType->find(typePrefix) == 0 && paramType->size() > strlen(typePrefix)) {
+			actualType = paramType->substr(strlen(typePrefix), -1);
+			isVariant = true;
+		}
+		cmd.mCParameters[*paramName] = syntax_c_parameter{ .mName = *paramName, .mType = { .mCName = *paramType, .mType = syntax_c_parameter::value_data_type(actualType), .mIsVariant = isVariant }, .mParameterIndex = parameterIndex };
 		++parameterIndex;
 		
 		if (!expect_identifier(identifier_comma_operator)) {
@@ -679,7 +695,7 @@ void	forge::parser::parse_import_statement()
 			}
 			
 			syntax_c_parameter &cParameter = cmd.mCParameters[*paramName];
-			label.mType = cParameter.value_data_type();
+			label.mType = cParameter.mType;
 			label.mCParameterName = *paramName;
 			
 			if (!expect_identifier(identifier_greater_than_operator)) {
@@ -778,6 +794,12 @@ void	forge::handler_definition::generate_code( forge::codegen& inCodegen )
 	}
 
 	inCodegen.end_encoding_handler(*this);
+}
+
+
+void	forge::variable_value::generate_code( forge::codegen &inCodegen )
+{
+	inCodegen.encode_variable(mString);
 }
 
 
@@ -888,6 +910,31 @@ void	forge::handler_call::copy_to( value &dest ) const
 }
 
 
+void	forge::operator_call::generate_code( forge::codegen& inCodegen )
+{
+	if (mName == "forge::dot_operator") {
+		inCodegen.start_encoding_field_access(*this);
+		
+		inCodegen.start_encoding_field_access_object(*this, mParameters[0]);
+		inCodegen.encode_value(mParameters[0]);
+		inCodegen.end_encoding_field_access_object(*this, mParameters[0]);
+		inCodegen.encode_field_access_field_name(*this, mParameters[1]->get_string());
+
+		inCodegen.end_encoding_field_access(*this);
+	} else {
+		inCodegen.start_encoding_raw_call(*this);
+		bool isFirst = true;
+		for (auto currParam : mParameters) {
+			inCodegen.start_encoding_raw_call_parameter(*this, currParam, isFirst);
+			forge::generate_code(currParam, inCodegen);
+			inCodegen.end_encoding_raw_call_parameter(*this, currParam, isFirst);
+			isFirst = false;
+		}
+		inCodegen.end_encoding_raw_call(*this);
+	}
+}
+
+
 std::string	forge::loop_call::get_string() const
 {
 	std::string msg(mName);
@@ -915,6 +962,28 @@ std::string	forge::loop_call::get_string() const
 }
 
 
+void	forge::loop_call::generate_code( forge::codegen& inCodegen )
+{
+	inCodegen.start_encoding_raw_call(*this);
+	bool isFirst = true;
+	for (auto currParam : mParameters) {
+		inCodegen.start_encoding_raw_call_parameter(*this, currParam, isFirst);
+		forge::generate_code(currParam, inCodegen);
+		inCodegen.end_encoding_raw_call_parameter(*this, currParam, isFirst);
+		isFirst = false;
+	}
+	inCodegen.end_encoding_raw_call(*this);
+
+	inCodegen.start_encoding_raw_call_commands(*this);
+	for (auto c : mCommands) {
+		inCodegen.start_encoding_command(*inCodegen.current_handler(), *c);
+		c->generate_code(inCodegen);
+		inCodegen.end_encoding_command(*inCodegen.current_handler(), *c);
+	}
+	inCodegen.end_encoding_raw_call_commands(*this);
+}
+
+
 void	forge::codegen::start_encoding_script( const forge::script &inScript )
 {
 	mCode << "#include \"forgelib.hpp\"" << std::endl
@@ -935,6 +1004,8 @@ void	forge::codegen::start_encoding_script( const forge::script &inScript )
 
 void	forge::codegen::start_encoding_handler( const forge::handler_definition &inHandler )
 {
+	mCurrentHandler = &inHandler;
+	
 	mCode << "forge::variant " << inHandler.mCName << "(std::vector<forge::variant> params) {" << std::endl;
 
 	size_t paramNum = 0;
@@ -962,6 +1033,8 @@ void	forge::codegen::end_encoding_handler( const forge::handler_definition &inHa
 {
 	mCode << "\treturn forge::variant();" << std::endl;
 	mCode << "}" << std::endl << std::endl;
+	
+	mCurrentHandler = nullptr;
 }
 
 
@@ -979,7 +1052,7 @@ void	forge::codegen::end_encoding_command( const forge::handler_definition &inHa
 
 void	forge::codegen::start_encoding_handler_call( const forge::handler_call &inHandler )
 {
-	mCode << inHandler.mName << "(";
+	mCode << inHandler.mName << "((std::vector<forge::variant>){ ";
 }
 
 
@@ -993,13 +1066,85 @@ void	forge::codegen::start_encoding_handler_call_parameter( const forge::handler
 
 void	forge::codegen::end_encoding_handler_call_parameter( const forge::handler_call &inHandler, stack_suitable_value *inValue, bool isFirst )
 {
-
+	
 }
 
 
 void	forge::codegen::end_encoding_handler_call( const forge::handler_call &inHandler )
 {
+	mCode << "})";
+}
+
+
+void	forge::codegen::start_encoding_raw_call( const forge::handler_call &inHandler )
+{
+	if (inHandler.mName.compare("for") == 0) {
+		mCode << "for( " << inHandler.mParameters[1]->get_string() << ".copy_to(" << inHandler.mParameters[0]->get_string() << "); forge::is_less_than(" << inHandler.mParameters[0]->get_string() << "," << inHandler.mParameters[2]->get_string() << "); " << inHandler.mParameters[0]->get_string() << " )";
+	} else {
+		mCode << inHandler.mName << "(";
+	}
+}
+
+
+void	forge::codegen::start_encoding_raw_call_parameter( const forge::handler_call &inHandler, stack_suitable_value *inValue, bool isFirst )
+{
+	if (!isFirst) {
+		mCode << ", ";
+	}
+}
+
+
+void	forge::codegen::end_encoding_raw_call_parameter( const forge::handler_call &inHandler, stack_suitable_value *inValue, bool isFirst )
+{
+	
+}
+
+
+void	forge::codegen::end_encoding_raw_call( const forge::handler_call &inHandler )
+{
 	mCode << ")";
+}
+
+
+void	forge::codegen::start_encoding_raw_call_commands( const forge::handler_call &inHandler )
+{
+	mCode << " {" << std::endl;
+}
+
+
+void	forge::codegen::end_encoding_raw_call_commands( const forge::handler_call &inHandler )
+{
+	mCode << "\t}";
+}
+
+
+void	forge::codegen::start_encoding_field_access( const forge::handler_call &inCall )
+{
+	
+}
+
+
+void	forge::codegen::start_encoding_field_access_object( const forge::handler_call &inCall, forge::stack_suitable_value* inValue )
+{
+	mCode << "(";
+}
+
+
+void	forge::codegen::end_encoding_field_access_object( const forge::handler_call &inCall, forge::stack_suitable_value* inValue )
+{
+	mCode << ").";
+}
+
+
+void	forge::codegen::encode_field_access_field_name( const forge::handler_call &inCall, const std::string& inName )
+{
+	mCode << inName << " ";
+}
+
+
+void	forge::codegen::end_encoding_field_access( const forge::handler_call &inCall )
+{
+	
 }
 
 
@@ -1011,7 +1156,11 @@ void	forge::codegen::end_encoding_script( const forge::script &inScript )
 
 void	forge::codegen::encode_value( stack_suitable_value* inValue )
 {
-	if (inValue->data_type() & value_data_type_int64) {
+	if (variable_value *var = dynamic_cast<variable_value *>(inValue)) {
+		var->generate_code(*this);
+	} else if (handler_call *call = dynamic_cast<handler_call *>(inValue)) {
+		call->generate_code(*this);
+	} else if (inValue->data_type() & value_data_type_int64) {
 		mCode << "forge::static_int64(" << inValue->get_string() << ")";
 	} else if (inValue->data_type() & value_data_type_double) {
 		mCode << "forge::static_double(" << inValue->get_string() << ")";
@@ -1027,10 +1176,5 @@ void	forge::codegen::encode_value( stack_suitable_value* inValue )
 
 void forge::generate_code( stack_suitable_value *inValue, forge::codegen& inCodegen )
 {
-	handler_call *call = dynamic_cast<handler_call *>(inValue);
-	if (call) {
-		call->generate_code(inCodegen);
-	} else {
-		inCodegen.encode_value( inValue );
-	}
+	inCodegen.encode_value( inValue );
 }

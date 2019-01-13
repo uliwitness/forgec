@@ -319,7 +319,9 @@ namespace forge {
 	variant less_than_equal( forge::variant a, forge::variant b );
 	variant greater_than( forge::variant a, forge::variant b );
 	variant greater_than_equal( forge::variant a, forge::variant b );
+	variant cmd_put( std::vector<forge::variant> params );
 
+	void assign_to( forge::variant a, forge::variant &b );
 	void append_to( forge::variant a, forge::variant &b );
 	void prefix_to( forge::variant a, forge::variant &b );
 }

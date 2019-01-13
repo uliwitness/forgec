@@ -13,6 +13,7 @@
 #include "forgelib.hpp"
 #include <vector>
 #include <sstream>
+#include <set>
 
 
 namespace forge {
@@ -25,7 +26,8 @@ namespace forge {
 	class c_type {
 	public:
 		std::string	mCName;
-		forge::value_data_type mType;
+		forge::value_data_type mType = value_data_type_NONE;
+		bool mIsVariant = false;
 	};
 	
 	class parse_error : public std::exception {
@@ -45,13 +47,13 @@ namespace forge {
 	class syntax_c_parameter {
 	public:
 		std::string		mName;
-		std::string		mType;
+		c_type			mType;
 		size_t			mParameterIndex;
 		
 		value_data_type	value_data_type() const;
 		
 		void	print( std::ostream &dest ) {
-			dest << ", " << mParameterIndex << ": " << mType << " " << mName;
+			dest << ", " << mParameterIndex << ": " << mType.mCName << " " << mName;
 		}
 
 		static forge::value_data_type	value_data_type( std::string inTypeStr );
@@ -60,14 +62,14 @@ namespace forge {
 	class syntax_label {
 	public:
 		std::vector<std::string>	mLabels;
-		forge::value_data_type		mType = value_data_type_NONE;
+		c_type						mType;
 		std::string					mCParameterName;
 		
 		void	print( std::ostream &dest ) {
 			for (auto currLabel : mLabels) {
 				dest << " " << currLabel;
 			}
-			if (mCParameterName.length() > 0 || mType != value_data_type_NONE) {
+			if (mCParameterName.length() > 0 || mType.mType != value_data_type_NONE) {
 				dest << " <" << mCParameterName << "(" << flags_string() << ")>";
 			}
 		}
@@ -100,12 +102,14 @@ namespace forge {
 	};
 
 	
+	class codegen;
+	
 	class variable_value : public static_string {
 	public:
 		explicit variable_value( std::string inStr = std::string() ) : static_string(inStr) {}
+
+		void	generate_code( forge::codegen &inCodegen );
 	};
-	
-	class codegen;
 	
 	class parameter_declaration {
 	public:
@@ -125,6 +129,7 @@ namespace forge {
 	public:
 		std::string							mName;
 		std::vector<stack_suitable_value *>	mParameters;
+		std::set<size_t>					mVariantParameters;
 
 		virtual void		set_int64( int64_t inNum );
 		virtual int64_t		get_int64() const;
@@ -147,11 +152,12 @@ namespace forge {
 			dest << get_string() << std::endl;
 		}
 
-		void	generate_code( forge::codegen &inCodegen );
+		virtual void	generate_code( forge::codegen &inCodegen );
 	};
 	
 	class operator_call : public handler_call {
 	public:
+		virtual void	generate_code( forge::codegen &inCodegen );
 	};
 	
 	class loop_call: public handler_call {
@@ -159,6 +165,8 @@ namespace forge {
 		std::vector<handler_call *>	mCommands;
 
 		virtual std::string	get_string() const;
+
+		virtual void	generate_code( forge::codegen &inCodegen );
 	};
 	
 	class variable_entry {
@@ -232,15 +240,33 @@ namespace forge {
 		void	start_encoding_handler_call_parameter( const forge::handler_call &inCall, forge::stack_suitable_value* inValue, bool isFirst );
 		void	end_encoding_handler_call_parameter( const forge::handler_call &inCall, forge::stack_suitable_value* inValue, bool isFirst );
 		void	end_encoding_handler_call( const forge::handler_call &inCall );
+		
+		void	start_encoding_raw_call( const forge::handler_call &inCall );
+		void	start_encoding_raw_call_parameter( const forge::handler_call &inCall, forge::stack_suitable_value* inValue, bool isFirst );
+		void	end_encoding_raw_call_parameter( const forge::handler_call &inCall, forge::stack_suitable_value* inValue, bool isFirst );
+		void	end_encoding_raw_call( const forge::handler_call &inCall );
+		void	start_encoding_raw_call_commands( const forge::handler_call &inCall );
+		void	end_encoding_raw_call_commands( const forge::handler_call &inCall );
+
+		void	start_encoding_field_access( const forge::handler_call &inCall );
+		void	start_encoding_field_access_object( const forge::handler_call &inCall, forge::stack_suitable_value* inValue );
+		void	end_encoding_field_access_object( const forge::handler_call &inCall, forge::stack_suitable_value* inValue );
+		void	encode_field_access_field_name( const forge::handler_call &inCall, const std::string& inName );
+		void	end_encoding_field_access( const forge::handler_call &inCall );
+
 		void	end_encoding_handler( const forge::handler_definition &inHandler );
 		void	end_encoding_script( const forge::script &inScript );
 		
 		void	encode_value( forge::stack_suitable_value* inValue );
+		void	encode_variable( std::string varName ) { mCode << varName; }
 
 		void	print( std::ostream &dest ) { dest << mCode.str(); }
+		
+		const forge::handler_definition	*current_handler() { return mCurrentHandler; }
 
 	protected:
-		std::stringstream	mCode;
+		std::stringstream				mCode;
+		const forge::handler_definition	*mCurrentHandler = nullptr;
 	};
 	
 	class parser {

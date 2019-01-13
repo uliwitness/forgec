@@ -38,8 +38,8 @@ int main(int argc, const char * argv[]) {
 			throw;
 		}
 		
-//		p.print( std::cout );
-//		s.print( std::cout );
+		p.print( std::cout );
+		s.print( std::cout );
 		
 		codegen	codeGen;
 		s.generate_code(codeGen);
